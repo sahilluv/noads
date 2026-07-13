@@ -56,7 +56,7 @@ precision highp float;
 #define DEFAULT_WEIGHTED_X_DIST_SCALE 1.5
 #define X_DIST_SCALING_EDGE_ASPECT_CORRECTION 1 // sometimes looks better without it due to extreme vertical elongation and small sizes
 
-#define MEDIA_ENABLED 1
+#define MEDIA_ENABLED 0
 #define MEDIA_HIDDEN 0
 #define MEDIA_GAMMA_CONVERSION_FACTOR 2
 #define MEDIA_GRAYSCALE 0
@@ -724,12 +724,35 @@ void rotateMediaUv(inout vec2 mediaUv, in uint index) {
     mediaUv = rotatedUv + centerUv;
 }
 
-// Assigns a random vec3 color based on the primary cell index
+// HSL to RGB helper
+vec3 hsl2rgb(float h, float s, float l) {
+    float c2 = (1.0 - abs(2.0 * l - 1.0)) * s;
+    float x  = c2 * (1.0 - abs(mod(h * 6.0, 2.0) - 1.0));
+    float m  = l - c2 * 0.5;
+    vec3 rgb;
+    if      (h < 1.0/6.0) rgb = vec3(c2, x,  0.0);
+    else if (h < 2.0/6.0) rgb = vec3(x,  c2, 0.0);
+    else if (h < 3.0/6.0) rgb = vec3(0.0, c2, x);
+    else if (h < 4.0/6.0) rgb = vec3(0.0, x,  c2);
+    else if (h < 5.0/6.0) rgb = vec3(x,  0.0, c2);
+    else                   rgb = vec3(c2, 0.0, x);
+    return rgb + m;
+}
+
+// Assigns a vivid, attractive colour to each cell
 void randomCellColor(inout vec3 c, inout float a, in Plot plot) {
-    float r = randomColorChannel(plot.indices.x);
-    float g = randomColorChannel(plot.indices.x + 1u);
-    float b = randomColorChannel(plot.indices.x + 2u);
-    c = vec3(r, g, b);
+    // Use golden-ratio hue spread so neighbours never share a hue
+    float hue = fract(float(plot.indices.x) * 0.618033988749);
+    // Vary saturation & lightness slightly per cell for depth
+    float sat = 0.72 + 0.18 * randomColorChannel(plot.indices.x + 7u);
+    float lit = 0.38 + 0.18 * randomColorChannel(plot.indices.x + 13u);
+    c = hsl2rgb(hue, sat, lit);
+    // Subtle animated pulse near the pointer / center force
+    vec2 cellCoords = fetchAspectCellCoords(plot.indices.x);
+    vec2 pointerCoords = aspectCoords(rawCoords(fPointer));
+    float d = length(cellCoords - pointerCoords);
+    float glow = exp(-d * d * 4.0) * 0.25 * (0.5 + 0.5 * sin(iTime * 2.0));
+    c = mix(c, vec3(1.0), glow);
 }
 
 vec2 getMirroredTileUV(vec2 uv, float shrinkAmount) {
