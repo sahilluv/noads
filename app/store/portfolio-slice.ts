@@ -30,7 +30,26 @@ export const createPortfolioSlice: StateCreator<
   PortfolioSlice
 > = (set) => ({
   balance: 1000000,
-  ownedCells: {},
+  ownedCells: Object.fromEntries(
+    Array.from({ length: 15 }, (_, i) => {
+      // Pick random cell indices between 0 and 200
+      const index = Math.floor(Math.random() * 200)
+      return [
+        index,
+        {
+          price: 100,
+          totalPaid: 100,
+          business: {
+            name: `Dummy Ad ${i}`,
+            email: `dummy${i}@test.com`,
+            hasVideo: false,
+            // Random cute placeholder image
+            imageUrl: `https://picsum.photos/seed/${index}/100/100`,
+          },
+        },
+      ]
+    })
+  ),
   buyCell: (index, price) =>
     set((state) => {
       if (state.balance >= price && !state.ownedCells[index]) {
