@@ -31,20 +31,18 @@ export const createPortfolioSlice: StateCreator<
 > = (set) => ({
   balance: 1000000,
   ownedCells: Object.fromEntries(
-    Array.from({ length: 15 }, (_, i) => {
-      // Pick random cell indices between 0 and 200
-      const index = Math.floor(Math.random() * 200)
+    Array.from({ length: 200 }, (_, index) => {
       return [
         index,
         {
           price: 100,
           totalPaid: 100,
           business: {
-            name: `Dummy Ad ${i}`,
-            email: `dummy${i}@test.com`,
+            name: `Dummy Ad ${index}`,
+            email: `dummy${index}@test.com`,
             hasVideo: false,
             // Random cute placeholder image
-            imageUrl: `https://picsum.photos/seed/${index}/100/100`,
+            imageUrl: `https://picsum.photos/seed/${index + 1000}/100/100`,
           },
         },
       ]
