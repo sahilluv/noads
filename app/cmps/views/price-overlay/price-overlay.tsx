@@ -449,6 +449,8 @@ export const PriceOverlay = () => {
     window.addEventListener('resize', resize)
 
     const imageCache: Record<string, HTMLImageElement> = {}
+    const mosaicImg = new Image()
+    mosaicImg.src = '/assets/mosaic.jpg'
 
     const draw = () => {
       rafRef.current = requestAnimationFrame(draw)
@@ -466,6 +468,9 @@ export const PriceOverlay = () => {
       const cells = vf.cells as Array<{ x: number; y: number; index: number }>
       const now = performance.now() / 1000
 
+      const availableCells = []
+      const ownedCellsArr = []
+
       for (let i = 0; i < cells.length; i++) {
         const cell = cells[i]
         const cx = cell.x
@@ -475,8 +480,38 @@ export const PriceOverlay = () => {
 
         const price = getPrice(cx, cy, W, H)
         const isOwned = !!ownedCells[cell.index]
-        const customImageUrl = ownedCells[cell.index]?.business?.imageUrl
+        
+        // Scale card by price tier and viewport size
+        const tier = (price - 100) / 900
+        const base = Math.min(W, H) * 0.063
+        const cardW = base + tier * base * 0.3
+        const cardH = cardW * 1.42
 
+        if (isOwned) {
+          ownedCellsArr.push({ cell, cx, cy, price, cardW, cardH, index: i })
+        } else {
+          availableCells.push({ cell, cx, cy, price, cardW, cardH, index: i })
+        }
+      }
+
+      // 1. Draw Available Cards
+      for (const item of availableCells) {
+        drawAvailableCard(ctx, item.cx, item.cy, item.cardW, item.cardH, item.price, now, item.index)
+      }
+
+      // 2. Draw Translucent Ghost Mosaic
+      if (mosaicImg.complete) {
+        ctx.save()
+        ctx.globalAlpha = 0.3
+        ctx.globalCompositeOperation = 'screen'
+        // Draw the mosaic covering the whole screen
+        ctx.drawImage(mosaicImg, 0, 0, W, H)
+        ctx.restore()
+      }
+
+      // 3. Draw Owned Cards (so they remain completely untouched by the mosaic)
+      for (const item of ownedCellsArr) {
+        const customImageUrl = ownedCells[item.cell.index]?.business?.imageUrl
         let img: HTMLImageElement | null = null
         if (customImageUrl) {
           if (!imageCache[customImageUrl]) {
@@ -486,18 +521,7 @@ export const PriceOverlay = () => {
           }
           img = imageCache[customImageUrl]
         }
-
-        // Scale card by price tier and viewport size
-        const tier = (price - 100) / 900
-        const base = Math.min(W, H) * 0.063
-        const cardW = base + tier * base * 0.3
-        const cardH = cardW * 1.42
-
-        if (isOwned) {
-          drawOwnedCard(ctx, cx, cy, cardW, cardH, img, now, i)
-        } else {
-          drawAvailableCard(ctx, cx, cy, cardW, cardH, price, now, i)
-        }
+        drawOwnedCard(ctx, item.cx, item.cy, item.cardW, item.cardH, img, now, item.index)
       }
     }
 
