@@ -1,26 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { store } from '../../../store'
+import { getPrice } from '../../../utils/pricing'
 
-/**
- * Maps a cell's screen distance from the viewport centre
- * to a price in the range [minPrice, maxPrice].
- * Cells closest to centre → highest price.
- */
-function getPrice(
-  cx: number,
-  cy: number,
-  vw: number,
-  vh: number,
-  minPrice = 100,
-  maxPrice = 1000,
-  step = 100,
-): number {
-  const maxDist = Math.sqrt((vw / 2) ** 2 + (vh / 2) ** 2)
-  const dist = Math.sqrt((cx - vw / 2) ** 2 + (cy - vh / 2) ** 2)
-  const t = Math.max(0, Math.min(1, dist / maxDist)) // 0 = centre, 1 = edge
-  const raw = maxPrice - t * (maxPrice - minPrice)
-  return Math.round(raw / step) * step
-}
+// getPrice imported from util
 
 /**
  * Draw a rounded rectangle.
@@ -63,10 +45,16 @@ export const PriceOverlay = () => {
     resize()
     window.addEventListener('resize', resize)
 
+    // Cache for loaded HTML images
+    const imageCache: Record<string, HTMLImageElement> = {}
+
     const draw = () => {
       rafRef.current = requestAnimationFrame(draw)
 
-      const vf = store.getState().voroforce
+      const state = store.getState()
+      const vf = state.voroforce
+      const portfolio = state.portfolio
+
       if (!vf?.cells) return
 
       const W = canvas.width
@@ -86,6 +74,31 @@ export const PriceOverlay = () => {
 
         const price = getPrice(cx, cy, W, H)
 
+        const isOwned = !!portfolio.ownedCells[cell.index]
+        const customImage = portfolio.ownedCells[cell.index]?.imageUrl
+
+        // If custom image exists, draw it!
+        if (customImage) {
+          if (!imageCache[customImage]) {
+            const img = new Image()
+            img.src = customImage
+            imageCache[customImage] = img
+          }
+          const img = imageCache[customImage]
+          if (img.complete) {
+            // Draw image covering the approx cell area (rect)
+            const imgW = 120 // Adjust based on cell scale
+            const imgH = 180
+            ctx.save()
+            // Optional: rounded rect clipping for the image
+            ctx.beginPath()
+            ctx.roundRect(cx - imgW/2, cy - imgH/2, imgW, imgH, 12)
+            ctx.clip()
+            ctx.drawImage(img, cx - imgW/2, cy - imgH/2, imgW, imgH)
+            ctx.restore()
+          }
+        }
+
         // Badge size scales slightly with price tier
         const tier = (price - 100) / 900 // 0..1, centre = 1
         const badgeW = 54 + tier * 14
@@ -94,7 +107,7 @@ export const PriceOverlay = () => {
         const by = cy - badgeH / 2 - 4
 
         // Animated pulse glow for the centre-most cells (high price)
-        if (tier > 0.7) {
+        if (tier > 0.7 && !isOwned) {
           const pulse = 0.3 + 0.2 * Math.sin(now * 3 + i * 0.7)
           ctx.save()
           ctx.shadowColor = `hsla(${40 + tier * 20}, 100%, 60%, ${pulse})`
@@ -102,17 +115,21 @@ export const PriceOverlay = () => {
           ctx.restore()
         }
 
-        // Badge background — gradient from cool blue (cheap) to warm gold (expensive)
-        const hue = 220 - tier * 180 // 220 = blue, 40 = gold
-        const grad = ctx.createLinearGradient(bx, by, bx, by + badgeH)
-        grad.addColorStop(0, `hsla(${hue}, 90%, 55%, 0.92)`)
-        grad.addColorStop(1, `hsla(${hue - 20}, 85%, 38%, 0.92)`)
-
         ctx.save()
+        
+        let hue = 220 - tier * 180 // 220 = blue, 40 = gold
+        if (isOwned) {
+          hue = 140 // Emerald green for owned
+        }
+
+        // Badge background
+        const grad = ctx.createLinearGradient(bx, by, bx, by + badgeH)
+        grad.addColorStop(0, `hsla(${hue}, ${isOwned ? '60%' : '90%'}, ${isOwned ? '30%' : '55%'}, 0.92)`)
+        grad.addColorStop(1, `hsla(${hue - (isOwned ? 0 : 20)}, ${isOwned ? '60%' : '85%'}, ${isOwned ? '15%' : '38%'}, 0.92)`)
 
         // Glow shadow
-        ctx.shadowColor = `hsla(${hue}, 100%, 65%, 0.6)`
-        ctx.shadowBlur = 8
+        ctx.shadowColor = `hsla(${hue}, 100%, 65%, ${isOwned ? 0.3 : 0.6})`
+        ctx.shadowBlur = isOwned ? 4 : 8
 
         roundRect(ctx, bx, by, badgeW, badgeH, 6)
         ctx.fillStyle = grad
@@ -121,27 +138,27 @@ export const PriceOverlay = () => {
         // Subtle bright border
         ctx.shadowBlur = 0
         roundRect(ctx, bx, by, badgeW, badgeH, 6)
-        ctx.strokeStyle = `hsla(${hue + 30}, 100%, 80%, 0.5)`
+        ctx.strokeStyle = `hsla(${hue + 30}, 100%, 80%, ${isOwned ? 0.3 : 0.5})`
         ctx.lineWidth = 1
         ctx.stroke()
 
         ctx.restore()
 
-        // "BUY" label
+        // "BUY" or "SOLD" label
         const fontSize = 7 + tier * 2
         ctx.save()
         ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`
-        ctx.fillStyle = 'rgba(255,255,255,0.85)'
+        ctx.fillStyle = isOwned ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.85)'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.fillText('BUY', cx, by + badgeH * 0.28)
+        ctx.fillText(isOwned ? 'SOLD' : 'BUY', cx, by + badgeH * 0.28)
         ctx.restore()
 
         // Price label  ₹ XXX
         const priceFont = 8 + tier * 3
         ctx.save()
         ctx.font = `900 ${priceFont}px Inter, system-ui, sans-serif`
-        ctx.fillStyle = '#ffffff'
+        ctx.fillStyle = isOwned ? 'rgba(255,255,255,0.6)' : '#ffffff'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.fillText(`₹${price}`, cx, by + badgeH * 0.72)
