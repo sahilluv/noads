@@ -11,15 +11,15 @@ over a hundred years of cinema to fall back on.
 ![WebGL](https://img.shields.io/badge/WebGL-enabled-green.svg)
 
 ## 🎬 Overview
-An experimental WebGL gallery that visualizes tens of thousands of film posters in an interactive force-directed voronoi diagram.
+An experimental WebGL gallery that visualizes tens of thousands of Ad posters in an interactive force-directed voronoi diagram.
 
 ### Key Features
 
-- **Interactive WebGL Visualization**: Real-time rendering of tens of thousands of film posters
+- **Interactive WebGL Visualization**: Real-time rendering of tens of thousands of Ad posters
 - **Custom Voroforce Engine**: Purpose-built force simulation and rendering system with multi-threading support
 - **Responsive Design**: Adapts to desktop, tablet, and mobile devices
 - **Performance Optimized**: GPU-accelerated rendering with efficient memory management
-- **Film Discovery**: Explore movies through visual relationships and clustering
+- **Ad Discovery**: Explore Ads through visual relationships and clustering
 - **Multiple View Modes**: Intro, selection, and preview modes for different user experiences
 
 ## 🚀 Quick Start
@@ -114,14 +114,14 @@ An experimental WebGL gallery that visualizes tens of thousands of film posters 
 │   ├── controls/          # User interaction handling
 │   └── utils/             # Engine utilities
 └── public/                # Static assets
-    ├── json/              # Film data files
-    └── media/             # Film poster images
+    ├── json/              # Ad data files
+    └── media/             # Ad poster images
 ```
 
 ### Data Flow
 
-1. **Film Data Loading**: JSON files loaded from `public/json/`
-2. **Film Image Serving**: Multi-resolution variants from `public/media/`
+1. **Ad Data Loading**: JSON files loaded from `public/json/`
+2. **Ad Image Serving**: Multi-resolution variants from `public/media/`
 3. **Voroforce Processing**: Data processed into engine
 4. **React Integration**: Components interact through Zustand store
 5. **Mode Management**: User interactions trigger mode changes (intro/select/preview)
@@ -143,7 +143,7 @@ Zustand store organized into slices:
 
 - **UI Slice**: Interface state, modals, settings
 - **Voroforce Slice**: Engine integration and control
-- **Film Data Slice**: Film data management and loading
+- **Ad Data Slice**: Ad data management and loading
 
 ### React Component Architecture
 
@@ -159,7 +159,7 @@ Create `.env.local` for local development:
 
 ```bash
 VITE_TEXTURES_BASE_URL=/media
-VITE_FILM_INFO_BASE_URL=/json
+VITE_Ad_INFO_BASE_URL=/json
 VITE_MEDIA_VERSION_0_LAYERS=1
 VITE_MEDIA_VERSION_1_LAYERS=1
 VITE_MEDIA_VERSION_2_LAYERS=1
@@ -172,7 +172,7 @@ The application includes several performance optimization features:
 
 - **Device Detection**: Recommended presets and settings based on device capabilities
 - **Memory Management**: Efficient WebGL resource handling
-- **Batch Loading**: Chunked film data & media loading
+- **Batch Loading**: Chunked Ad data & media loading
 - **Image Variants**: Multiple resolution options for different scaling levels
 
 ## 🧪 Testing
@@ -280,7 +280,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 **Exceptions**: 
 - WebGL fragment shaders are licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
-- Film data is licensed under the Open Data Commons Attribution License (ODC-By) v1.0.
+- Ad data is licensed under the Open Data Commons Attribution License (ODC-By) v1.0.
 
 ## 🙋‍♂️ Support
 

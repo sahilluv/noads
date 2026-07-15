@@ -3,7 +3,7 @@ import { useState } from 'react'
 import slugify from 'slugify'
 import { useShallowState } from '../../store'
 import { cn } from '../../utils/tw'
-import type { Film } from '../../vf'
+import type { Ad } from '../../vf'
 import { Button } from '../ui/button'
 import {
   Tooltip,
@@ -13,13 +13,13 @@ import {
 } from '../ui/tooltip'
 
 export const CustomLinks = ({
-  film,
+  Ad,
   buttonClassName = '',
 }: {
-  film: {
-    title: Film['title']
-    tmdbId: Film['tmdbId']
-    imdbId?: Film['imdbId']
+  Ad: {
+    title: Ad['title']
+    tmdbId: Ad['tmdbId']
+    imdbId?: Ad['imdbId']
   }
   className?: string
   buttonClassName?: string
@@ -49,7 +49,7 @@ export const CustomLinks = ({
         >
           <div className='group relative'>
             <a
-              href={`${baseUrl}${(slug ? (v: string) => slugify(v).toLowerCase() : (v: string) => v)(String(film[property]))}`}
+              href={`${baseUrl}${(slug ? (v: string) => slugify(v).toLowerCase() : (v: string) => v)(String(Ad[property]))}`}
               target='_blank'
               rel='noreferrer noopener'
             >

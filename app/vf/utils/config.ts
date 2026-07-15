@@ -10,7 +10,7 @@ import {
   VOROFORCE_PRESET,
 } from '../consts'
 import type { VoroforceCell, VoroforceInstance } from '../types'
-import type { Film } from './films'
+import type { Ad } from './ads'
 import type { ConfigUniform } from './uniforms'
 
 export type CustomLink = {
@@ -25,14 +25,14 @@ export type UserConfig = {
   devTools?: boolean
   customLinks?: CustomLink[]
   favorites?: {
-    [key: Film['tmdbId']]: {
+    [key: Ad['tmdbId']]: {
       cellId: VoroforceCell['id']
-      title: Film['title']
-      year: Film['year']
-      tagline: Film['tagline']
-      tmdbId: Film['tmdbId']
-      imdbId?: Film['imdbId']
-      poster?: Film['poster']
+      title: Ad['title']
+      year: Ad['year']
+      tagline: Ad['tagline']
+      tmdbId: Ad['tmdbId']
+      imdbId?: Ad['imdbId']
+      poster?: Ad['poster']
     }
   }
 }

@@ -1,10 +1,10 @@
 import type { VoroforceCell } from '../types'
 
-export type FilmData = Record<string, string | number>
-export type FilmBatch = FilmData[]
-export type FilmBatches = Map<number, FilmBatch>
+export type AdData = Record<string, string | number>
+export type AdBatch = AdData[]
+export type AdBatches = Map<number, AdBatch>
 
-export class Film {
+export class Ad {
   tmdbId: number
   imdbId?: string
   title: string
@@ -17,7 +17,7 @@ export class Film {
   poster: string
   backdrop: string
 
-  constructor(data: FilmData) {
+  constructor(data: AdData) {
     this.tmdbId = Number(data.id)
     this.imdbId = data.imdb_id ? String(data.imdb_id) : undefined
     this.title = String(data.title)
@@ -32,8 +32,8 @@ export class Film {
   }
 }
 
-const loadCellFilmBatch = async (batchIndex: number) => {
-  const url = `${import.meta.env.VITE_FILM_INFO_BASE_URL}/${batchIndex}.json`
+const loadCellAdBatch = async (batchIndex: number) => {
+  const url = `${import.meta.env.VITE_Ad_INFO_BASE_URL}/${batchIndex}.json`
   try {
     const response = await fetch(url)
     if (!response.ok) {
@@ -46,18 +46,18 @@ const loadCellFilmBatch = async (batchIndex: number) => {
   }
 }
 
-export const getCellFilm = async (
+export const getCellAd = async (
   cell: VoroforceCell,
-  filmBatches: FilmBatches,
+  adBatches: AdBatches,
 ) => {
   if (!cell) return
-  let filmBatch = filmBatches.get(cell.subgrid)
-  if (!filmBatch) {
-    filmBatch = await loadCellFilmBatch(cell.subgrid)
-    filmBatches.set(cell.subgrid, filmBatch ?? [])
+  let adBatch = adBatches.get(cell.subgrid)
+  if (!adBatch) {
+    adBatch = await loadCellAdBatch(cell.subgrid)
+    adBatches.set(cell.subgrid, adBatch ?? [])
   }
 
-  return filmBatch?.[cell.subgridIndex]
-    ? new Film(filmBatch[cell.subgridIndex])
+  return adBatch?.[cell.subgridIndex]
+    ? new Ad(adBatch[cell.subgridIndex])
     : undefined
 }

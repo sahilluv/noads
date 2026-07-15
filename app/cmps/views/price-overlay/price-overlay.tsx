@@ -53,7 +53,7 @@ export const PriceOverlay = () => {
 
       const state = store.getState()
       const vf = state.voroforce
-      const portfolio = state.portfolio
+      const ownedCells = state.ownedCells
 
       if (!vf?.cells) return
 
@@ -74,8 +74,8 @@ export const PriceOverlay = () => {
 
         const price = getPrice(cx, cy, W, H)
 
-        const isOwned = !!portfolio.ownedCells[cell.index]
-        const customImage = portfolio.ownedCells[cell.index]?.imageUrl
+        const isOwned = !!ownedCells[cell.index]
+        const customImage = ownedCells[cell.index]?.imageUrl
 
         // If custom image exists, draw it!
         if (customImage) {

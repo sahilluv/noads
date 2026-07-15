@@ -87,7 +87,7 @@ const controlsConfig = {
 export default {
   cells: 50000,
   media: mediaConfigWithUncompressedSingleVersion,
-  filmPreview: {
+  AdPreview: {
     neighborOriginMod: 0.4,
     scaleMod: 1.5,
   },

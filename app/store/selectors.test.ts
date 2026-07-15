@@ -61,9 +61,15 @@ const createMockState = (overrides: Partial<StoreState> = {}): StoreState => ({
   },
   setPerformanceMonitor: () => {},
 
-  // FilmData Slice defaults
-  setFilm: () => {},
-  filmBatches: new Map(),
+  // AdData Slice defaults
+  setAd: () => {},
+  adBatches: new Map(),
+
+  // PortfolioSlice defaults
+  balance: 1000000,
+  ownedCells: {},
+  buyCell: () => {},
+  setCellImage: () => {},
 
   // Apply overrides
   ...overrides,

@@ -82,12 +82,12 @@ export const selectPerformanceConfig = (state: StoreState) => ({
   userConfig: state.userConfig,
 })
 
-// Film data selectors
-export const selectCurrentFilm = (state: StoreState) => state.film
+// Ad data selectors
+export const selectCurrentAd = (state: StoreState) => state.ad
 
-export const selectFilmData = (state: StoreState) => ({
-  film: state.film,
-  filmBatches: state.filmBatches,
+export const selectAdData = (state: StoreState) => ({
+  ad: state.ad,
+  adBatches: state.adBatches,
 })
 
 // Composite selectors for common use cases

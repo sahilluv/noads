@@ -1,16 +1,16 @@
 import config from '../../config'
 import { cn } from '../../utils/tw'
-import type { Film } from '../../vf'
+import type { Ad } from '../../vf'
 import { Button } from '../ui/button'
 
 export const StdLinks = ({
-  film,
+  Ad,
   buttonClassName = '',
 }: {
-  film: {
-    title: Film['title']
-    tmdbId: Film['tmdbId']
-    imdbId?: Film['imdbId']
+  Ad: {
+    title: Ad['title']
+    tmdbId: Ad['tmdbId']
+    imdbId?: Ad['imdbId']
   }
   buttonClassName?: string
 }) => {
@@ -25,14 +25,14 @@ export const StdLinks = ({
         )}
       >
         <a
-          href={`${config.tmdbFilmBaseUrl}${film.tmdbId}`}
+          href={`${config.tmdbAdBaseUrl}${Ad.tmdbId}`}
           target='_blank'
           rel='noreferrer'
         >
           TMDB
         </a>
       </Button>
-      {film.imdbId && (
+      {Ad.imdbId && (
         <Button
           asChild
           variant='outline'
@@ -42,7 +42,7 @@ export const StdLinks = ({
           )}
         >
           <a
-            href={`${config.imdbFilmBaseUrl}${film.imdbId}`}
+            href={`${config.imdbAdBaseUrl}${Ad.imdbId}`}
             target='_blank'
             rel='noreferrer'
           >

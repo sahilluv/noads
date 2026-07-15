@@ -43,7 +43,7 @@ export const Dashboard = () => {
   }
 
   return (
-    <div className="fixed right-0 top-0 h-full w-80 bg-black/80 backdrop-blur-md border-l border-white/10 p-6 flex flex-col gap-8 z-50 overflow-y-auto font-sans text-white">
+    <div className="fixed right-4 top-24 bottom-4 w-80 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 p-6 flex flex-col gap-8 z-40 overflow-y-auto font-sans text-white shadow-2xl">
       <div>
         <h2 className="text-sm uppercase tracking-widest text-white/50 mb-1">Portfolio Balance</h2>
         <div className="text-3xl font-bold font-mono">

@@ -739,20 +739,34 @@ vec3 hsl2rgb(float h, float s, float l) {
     return rgb + m;
 }
 
-// Assigns a vivid, attractive colour to each cell
+// Assigns a space-themed, neon blue colour to each cell
 void randomCellColor(inout vec3 c, inout float a, in Plot plot) {
-    // Use golden-ratio hue spread so neighbours never share a hue
-    float hue = fract(float(plot.indices.x) * 0.618033988749);
-    // Vary saturation & lightness slightly per cell for depth
-    float sat = 0.72 + 0.18 * randomColorChannel(plot.indices.x + 7u);
-    float lit = 0.38 + 0.18 * randomColorChannel(plot.indices.x + 13u);
-    c = hsl2rgb(hue, sat, lit);
+    // Space theme: Hues restricted to Blues, Cyans, and Purples (0.55 to 0.75 in HSL)
+    float baseHue = 0.55 + 0.20 * randomColorChannel(plot.indices.x);
+    
+    // Saturation is high for that neon look
+    float sat = 0.80 + 0.20 * randomColorChannel(plot.indices.x + 7u);
+    
+    // Most cells are dark (deep space), but a few pop as bright neon
+    float randL = randomColorChannel(plot.indices.x + 13u);
+    float lit = 0.10 + 0.20 * randL;
+    
+    // ~15% chance to be a bright neon blue/cyan cell
+    if (randomColorChannel(plot.indices.x + 21u) > 0.85) {
+        baseHue = 0.5 + 0.1 * randomColorChannel(plot.indices.x); // Cyan to Blue
+        lit = 0.5 + 0.3 * randL; // Bright!
+    }
+    
+    c = hsl2rgb(baseHue, sat, lit);
+    
     // Subtle animated pulse near the pointer / center force
     vec2 cellCoords = fetchAspectCellCoords(plot.indices.x);
     vec2 pointerCoords = aspectCoords(rawCoords(fPointer));
     float d = length(cellCoords - pointerCoords);
-    float glow = exp(-d * d * 4.0) * 0.25 * (0.5 + 0.5 * sin(iTime * 2.0));
-    c = mix(c, vec3(1.0), glow);
+    float glow = exp(-d * d * 4.0) * 0.4 * (0.5 + 0.5 * sin(iTime * 2.0));
+    
+    // The pointer glow is a bright neon cyan
+    c = mix(c, vec3(0.1, 0.9, 1.0), glow);
 }
 
 vec2 getMirroredTileUV(vec2 uv, float shrinkAmount) {

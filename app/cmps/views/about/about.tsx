@@ -61,8 +61,8 @@ const items = [
             Open Data Commons Attribution License
           </Link>{' '}
           and is sourced from{' '}
-          <Link href='https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies/data'>
-            Kaggle's TMDB Movies Dataset
+          <Link href='https://www.kaggle.com/datasets/asaniczka/tmdb-Ads-dataset-2023-930k-Ads/data'>
+            Kaggle's TMDB Ads Dataset
           </Link>
         </p>
         <br />
@@ -87,15 +87,15 @@ const items = [
         <br />
         <p>
           This gallery features a collection of the 50,000 most <i>popular*</i>{' '}
-          movies according to <Link href={config.tmdbUrl}>TMDB</Link>, with data
-          current as of early 2025. The movies are sorted by popularity in
+          Ads according to <Link href={config.tmdbUrl}>TMDB</Link>, with data
+          current as of early 2025. The Ads are sorted by popularity in
           descending order, starting from the center of the grid and moving
           outward.
         </p>
         <br />
         <p>
           <small>
-            <i>*Not to be confused with the highest rated movies</i>
+            <i>*Not to be confused with the highest rated Ads</i>
           </small>
         </p>
       </>
@@ -218,7 +218,7 @@ const items = [
     content: (
       <>
         <p>
-          The film posters are packed into image montages, also known as texture
+          The Ad posters are packed into image montages, also known as texture
           atlases. These montages are served on demand as compressed textures,
           with multiple quality levels available. The lowest quality level
           delivers images as small as 4×6 pixels.
