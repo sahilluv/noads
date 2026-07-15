@@ -21,6 +21,12 @@ export interface UiSlice {
   addCustomLinkTypeOpen: boolean | DialogProps['direction']
   setAddCustomLinkTypeOpen: (open: boolean | DialogProps['direction']) => void
   toggleAddCustomLinkTypeOpen: () => void
+  buyModalOpen: boolean
+  buyModalCellIndex: number | null
+  buyModalCellX: number
+  buyModalCellY: number
+  openBuyModal: (cellIndex: number, x: number, y: number) => void
+  closeBuyModal: () => void
 }
 
 export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (
@@ -66,6 +72,16 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (
       set({
         addCustomLinkTypeOpen: !get().addCustomLinkTypeOpen,
       })
+    },
+    buyModalOpen: false,
+    buyModalCellIndex: null,
+    buyModalCellX: 0,
+    buyModalCellY: 0,
+    openBuyModal: (cellIndex, x, y) => {
+      set({ buyModalOpen: true, buyModalCellIndex: cellIndex, buyModalCellX: x, buyModalCellY: y })
+    },
+    closeBuyModal: () => {
+      set({ buyModalOpen: false, buyModalCellIndex: null })
     },
   }
 }

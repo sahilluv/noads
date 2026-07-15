@@ -103,7 +103,7 @@ export const Dashboard = () => {
                 <div className="flex items-center gap-3">
                   <div 
                     className="w-8 h-8 rounded bg-white/10 bg-cover bg-center border border-white/10"
-                    style={{ backgroundImage: data.imageUrl ? `url(${data.imageUrl})` : 'none' }}
+                    style={{ backgroundImage: data.business?.imageUrl ? `url(${data.business.imageUrl})` : 'none' }}
                   />
                   <div className="flex flex-col">
                     <span className="text-xs text-white/60 font-mono">Cell {index}</span>

@@ -27,9 +27,12 @@ export const handleControls = () => {
   controls.listen('selected', (async ({ cell }: { cell: VoroforceCell }) => {
     if (cell) {
       setAd(await getCellAd(cell, adBatches))
-      // controls.pinPointer()
+      const { ownedCells, openBuyModal } = store.getState()
+      if (!ownedCells[cell.index]) {
+        openBuyModal(cell.index, cell.x, cell.y)
+      }
     } else {
-      // controls.unpinPointer()
+      store.getState().closeBuyModal()
     }
   }) as unknown as EventListener)
 

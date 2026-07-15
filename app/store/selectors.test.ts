@@ -33,6 +33,12 @@ const createMockState = (overrides: Partial<StoreState> = {}): StoreState => ({
   addCustomLinkTypeOpen: false,
   setAddCustomLinkTypeOpen: () => {},
   toggleAddCustomLinkTypeOpen: () => {},
+  buyModalOpen: false,
+  buyModalCellIndex: null,
+  buyModalCellX: 0,
+  buyModalCellY: 0,
+  openBuyModal: () => {},
+  closeBuyModal: () => {},
 
   // Voroforce Slice defaults
   ua: new UAParser(),
@@ -69,6 +75,7 @@ const createMockState = (overrides: Partial<StoreState> = {}): StoreState => ({
   balance: 1000000,
   ownedCells: {},
   buyCell: () => {},
+  completePurchase: () => {},
   setCellImage: () => {},
 
   // Apply overrides

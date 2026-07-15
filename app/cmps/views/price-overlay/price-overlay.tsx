@@ -110,7 +110,6 @@ function drawAvailableCard(
   const cardR = cardW * 0.09
 
   const CYAN = 'rgba(0, 210, 255, 1)'
-  const CYAN_DIM = 'rgba(0, 210, 255, 0.18)'
   const CYAN_MID = 'rgba(0, 210, 255, 0.55)'
   const CYAN_GRID = 'rgba(0, 180, 220, 0.10)'
 
@@ -476,7 +475,7 @@ export const PriceOverlay = () => {
 
         const price = getPrice(cx, cy, W, H)
         const isOwned = !!ownedCells[cell.index]
-        const customImageUrl = ownedCells[cell.index]?.imageUrl
+        const customImageUrl = ownedCells[cell.index]?.business?.imageUrl
 
         let img: HTMLImageElement | null = null
         if (customImageUrl) {
