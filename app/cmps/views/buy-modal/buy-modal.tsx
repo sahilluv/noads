@@ -1,511 +1,411 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useCallback } from 'react'
+import { CheckCircle, Upload, Video, X, Zap } from 'lucide-react'
 import { useShallowState } from '../../../store'
 import { getPrice } from '../../../utils/pricing'
 import type { BusinessInfo } from '../../../store/portfolio-slice'
+import config from '../../../config'
 
-const VIDEO_ADDON_PRICE = 500
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-// ── Inline styles ────────────────────────────────────────────────────────────
+type Step = 'review' | 'details' | 'success'
 
-const overlay: React.CSSProperties = {
-  position: 'fixed',
-  inset: 0,
-  background: 'rgba(0, 5, 20, 0.82)',
-  backdropFilter: 'blur(10px)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 1000,
-  padding: '16px',
-}
+// ── Design tokens ─────────────────────────────────────────────────────────────
 
-const card: React.CSSProperties = {
-  background: 'linear-gradient(160deg, #050f28 0%, #071530 100%)',
-  border: '1px solid rgba(30, 100, 220, 0.5)',
-  borderRadius: '20px',
-  width: '100%',
-  maxWidth: '480px',
-  boxShadow: '0 0 40px rgba(0, 150, 255, 0.18), 0 0 80px rgba(0, 100, 200, 0.08)',
-  overflow: 'hidden',
-  fontFamily: 'Inter, system-ui, sans-serif',
-}
+const CYAN        = 'hsl(196, 100%, 55%)'
+const CYAN_DIM    = 'rgba(0, 210, 255, 0.14)'
+const CYAN_BORDER = 'rgba(0, 210, 255, 0.25)'
+const SURFACE     = 'rgba(5, 9, 28, 0.96)'
+const CARD_BORDER = 'rgba(0, 210, 255, 0.18)'
 
-const header: React.CSSProperties = {
-  padding: '20px 24px 16px',
-  borderBottom: '1px solid rgba(30, 80, 180, 0.3)',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-}
+// ── Primitive components ──────────────────────────────────────────────────────
 
-const closeBtn: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  color: 'rgba(255,255,255,0.6)',
-  width: '32px',
-  height: '32px',
-  borderRadius: '8px',
-  cursor: 'pointer',
-  fontSize: '16px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  transition: 'all 0.2s',
-}
+const Field = ({
+  label,
+  required,
+  children,
+}: {
+  label: string
+  required?: boolean
+  children: React.ReactNode
+}) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+    <label style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: 'rgba(180,200,220,0.55)', textTransform: 'uppercase' }}>
+      {label}{required && <span style={{ color: CYAN, marginLeft: '4px' }}>*</span>}
+    </label>
+    {children}
+  </div>
+)
 
-const body: React.CSSProperties = {
-  padding: '24px',
-}
+const Input = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
+  <input
+    {...props}
+    style={{
+      width: '100%',
+      padding: '10px 14px',
+      borderRadius: '10px',
+      border: `1px solid ${CYAN_BORDER}`,
+      background: 'rgba(0, 210, 255, 0.04)',
+      color: 'white',
+      fontSize: '14px',
+      fontFamily: "'Space Grotesk', sans-serif",
+      outline: 'none',
+      transition: 'border-color 0.2s',
+      boxSizing: 'border-box',
+      ...props.style,
+    }}
+  />
+)
 
-const label: React.CSSProperties = {
-  display: 'block',
-  fontSize: '11px',
-  fontWeight: 600,
-  color: 'rgba(100, 160, 255, 0.8)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.1em',
-  marginBottom: '6px',
-}
+const PrimaryBtn = ({
+  children,
+  onClick,
+  disabled,
+  fullWidth,
+}: {
+  children: React.ReactNode
+  onClick?: () => void
+  disabled?: boolean
+  fullWidth?: boolean
+}) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    style={{
+      width: fullWidth ? '100%' : undefined,
+      padding: '12px 24px',
+      borderRadius: '12px',
+      border: `1px solid ${CYAN_BORDER}`,
+      background: disabled
+        ? 'rgba(255,255,255,0.05)'
+        : 'linear-gradient(135deg, hsl(255 60% 30%), hsl(196 100% 42%))',
+      color: disabled ? 'rgba(255,255,255,0.3)' : 'white',
+      fontSize: '14px',
+      fontWeight: 700,
+      letterSpacing: '0.05em',
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      transition: 'all 0.2s',
+      boxShadow: disabled ? 'none' : `0 0 20px rgba(0, 210, 255, 0.2)`,
+      fontFamily: "'Space Grotesk', sans-serif",
+    }}
+  >
+    {children}
+  </button>
+)
 
-const input: React.CSSProperties = {
-  width: '100%',
-  background: 'rgba(5, 15, 40, 0.8)',
-  border: '1px solid rgba(30, 80, 180, 0.4)',
-  borderRadius: '10px',
-  padding: '11px 14px',
-  color: 'rgba(220, 235, 255, 0.95)',
-  fontSize: '14px',
-  outline: 'none',
-  boxSizing: 'border-box',
-  transition: 'border-color 0.2s',
-  fontFamily: 'inherit',
-}
+const GhostBtn = ({
+  children,
+  onClick,
+}: {
+  children: React.ReactNode
+  onClick?: () => void
+}) => (
+  <button
+    onClick={onClick}
+    style={{
+      padding: '10px 20px',
+      borderRadius: '10px',
+      border: '1px solid rgba(255,255,255,0.1)',
+      background: 'transparent',
+      color: 'rgba(255,255,255,0.5)',
+      fontSize: '13px',
+      fontWeight: 600,
+      cursor: 'pointer',
+      transition: 'all 0.2s',
+      fontFamily: "'Space Grotesk', sans-serif",
+    }}
+  >
+    {children}
+  </button>
+)
 
-const fieldGroup: React.CSSProperties = {
-  marginBottom: '16px',
-}
+const UploadZone = ({
+  label,
+  accept,
+  preview,
+  onFile,
+  icon,
+}: {
+  label: string
+  accept: string
+  preview?: string | null
+  onFile: (f: File) => void
+  icon: React.ReactNode
+}) => (
+  <label
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
+      padding: '20px',
+      borderRadius: '12px',
+      border: `1.5px dashed ${CYAN_BORDER}`,
+      background: preview ? 'transparent' : CYAN_DIM,
+      cursor: 'pointer',
+      minHeight: '90px',
+      position: 'relative',
+      overflow: 'hidden',
+      transition: 'border-color 0.2s',
+    }}
+  >
+    {preview ? (
+      <img
+        src={preview}
+        alt='preview'
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7 }}
+      />
+    ) : (
+      <>
+        <span style={{ color: CYAN }}>{icon}</span>
+        <span style={{ fontSize: '12px', color: 'rgba(180,200,220,0.55)', textAlign: 'center' }}>{label}</span>
+      </>
+    )}
+    <input
+      type='file'
+      accept={accept}
+      style={{ display: 'none' }}
+      onChange={(e) => {
+        const f = e.target.files?.[0]
+        if (f) onFile(f)
+      }}
+    />
+  </label>
+)
 
-const primaryBtn: React.CSSProperties = {
-  width: '100%',
-  background: 'linear-gradient(135deg, #1050d0 0%, #0a35a0 100%)',
-  border: '1px solid rgba(60, 160, 255, 0.6)',
-  borderRadius: '12px',
-  color: '#ffffff',
-  padding: '14px',
-  fontSize: '15px',
-  fontWeight: 700,
-  cursor: 'pointer',
-  letterSpacing: '0.05em',
-  boxShadow: '0 0 20px rgba(0, 120, 255, 0.3)',
-  transition: 'all 0.2s',
-  fontFamily: 'inherit',
-}
+// ── Step 1 — Review ───────────────────────────────────────────────────────────
 
-const uploadBox: React.CSSProperties = {
-  border: '1.5px dashed rgba(40, 120, 255, 0.4)',
-  borderRadius: '12px',
-  padding: '20px',
-  textAlign: 'center',
-  cursor: 'pointer',
-  background: 'rgba(5, 20, 60, 0.4)',
-  transition: 'all 0.2s',
-  color: 'rgba(120, 170, 255, 0.7)',
-  fontSize: '13px',
-}
-
-const successCard: React.CSSProperties = {
-  textAlign: 'center',
-  padding: '32px 24px',
-}
-
-// ── Step 1 — Tile Info & Confirm ────────────────────────────────────────────
-
-function StepConfirm({
+const StepReview = ({
   cellIndex,
-  price,
+  basePrice,
+  hasVideo,
+  onToggleVideo,
   onNext,
   onClose,
 }: {
   cellIndex: number
-  price: number
+  basePrice: number
+  hasVideo: boolean
+  onToggleVideo: () => void
   onNext: () => void
   onClose: () => void
-}) {
+}) => {
+  const total = basePrice + (hasVideo ? config.videoAddonPrice : 0)
+
   return (
-    <div>
-      <div style={header}>
-        <div>
-          <div style={{ fontSize: '11px', color: 'rgba(0,210,255,0.8)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '4px' }}>
-            ◆ AVAILABLE
-          </div>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#fff' }}>Buy This Tile</div>
-        </div>
-        <button style={closeBtn} onClick={onClose}>✕</button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Tile info */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '16px', borderRadius: '14px', background: CYAN_DIM, border: `1px solid ${CYAN_BORDER}` }}>
+        <span style={{ fontSize: '11px', letterSpacing: '0.08em', color: 'rgba(180,200,220,0.5)', textTransform: 'uppercase' }}>Tile ID</span>
+        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, color: CYAN, fontSize: '22px' }}>#{cellIndex}</span>
+        <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>Permanent placement · Visible globally · Never expires</span>
       </div>
 
-      <div style={body}>
-        {/* Tile preview card */}
+      {/* Pricing breakdown */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>
+          <span>Base tile price</span>
+          <span style={{ fontFamily: "'Space Mono', monospace" }}>₹{basePrice.toLocaleString('en-IN')}</span>
+        </div>
+        {hasVideo && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>
+            <span>Video ad addon</span>
+            <span style={{ fontFamily: "'Space Mono', monospace" }}>₹{config.videoAddonPrice.toLocaleString('en-IN')}</span>
+          </div>
+        )}
+        <div style={{ height: '1px', background: 'rgba(0,210,255,0.12)', margin: '4px 0' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 700 }}>
+          <span style={{ color: 'white' }}>Total</span>
+          <span style={{ color: CYAN, fontFamily: "'Space Mono', monospace" }}>₹{total.toLocaleString('en-IN')}</span>
+        </div>
+      </div>
+
+      {/* Video toggle */}
+      <div
+        onClick={onToggleVideo}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 16px',
+          borderRadius: '12px',
+          border: `1px solid ${hasVideo ? CYAN_BORDER : 'rgba(255,255,255,0.08)'}`,
+          background: hasVideo ? CYAN_DIM : 'rgba(255,255,255,0.02)',
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Video style={{ color: hasVideo ? CYAN : 'rgba(255,255,255,0.35)', width: 16, height: 16 }} />
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: hasVideo ? CYAN : 'rgba(255,255,255,0.7)' }}>Add 10-sec Video Ad</div>
+            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>+₹{config.videoAddonPrice} · MP4 or WebM</div>
+          </div>
+        </div>
         <div style={{
-          background: 'rgba(2, 10, 30, 0.9)',
-          border: '1px solid rgba(0, 180, 255, 0.3)',
-          borderRadius: '14px',
-          padding: '20px',
-          marginBottom: '20px',
-          boxShadow: 'inset 0 0 30px rgba(0, 100, 200, 0.08)',
+          width: '36px', height: '20px', borderRadius: '10px',
+          background: hasVideo ? CYAN : 'rgba(255,255,255,0.12)',
+          position: 'relative', transition: 'background 0.2s',
         }}>
-          {/* Grid visual */}
-          <div style={{ position: 'relative', height: '80px', marginBottom: '16px', overflow: 'hidden', borderRadius: '8px', background: 'rgba(0,5,20,0.8)' }}>
-            <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0, opacity: 0.15 }}>
-              {Array.from({ length: 8 }).map((_, i) => (
-                <line key={`v${i}`} x1={`${(i + 1) * 12.5}%`} y1="0" x2={`${(i + 1) * 12.5}%`} y2="100%" stroke="#00d4ff" strokeWidth="0.5" />
-              ))}
-              {Array.from({ length: 5 }).map((_, i) => (
-                <line key={`h${i}`} x1="0" y1={`${(i + 1) * 20}%`} x2="100%" y2={`${(i + 1) * 20}%`} stroke="#00d4ff" strokeWidth="0.5" />
-              ))}
-              <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fill="rgba(0,200,255,0.4)" fontSize="11" fontFamily="Inter" fontWeight="700" letterSpacing="4">
-                TILE #{cellIndex}
-              </text>
-            </svg>
-            {/* Corner brackets */}
-            {[['8px','8px','right','bottom'],['calc(100% - 8px)','8px','left','bottom'],['8px','calc(100% - 8px)','right','top'],['calc(100% - 8px)','calc(100% - 8px)','left','top']].map(([x,y,bx,by], i) => (
-              <div key={i} style={{ position: 'absolute', left: x, top: y, width: '14px', height: '14px',
-                borderRight: bx === 'right' ? '1.5px solid rgba(0,210,255,0.7)' : 'none',
-                borderLeft: bx === 'left' ? '1.5px solid rgba(0,210,255,0.7)' : 'none',
-                borderBottom: by === 'bottom' ? '1.5px solid rgba(0,210,255,0.7)' : 'none',
-                borderTop: by === 'top' ? '1.5px solid rgba(0,210,255,0.7)' : 'none',
-              }} />
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-            <div>
-              <div style={{ fontSize: '11px', color: 'rgba(100,160,255,0.7)', fontWeight: 600, marginBottom: '2px' }}>BASE PRICE</div>
-              <div style={{ fontSize: '28px', fontWeight: 900, color: '#fff' }}>₹{price}</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '11px', color: 'rgba(100,160,255,0.7)', fontWeight: 600, marginBottom: '2px' }}>+ VIDEO ADDON</div>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: 'rgba(0,210,255,0.8)' }}>₹{VIDEO_ADDON_PRICE}</div>
-            </div>
-          </div>
+          <div style={{
+            position: 'absolute', top: '3px', left: hasVideo ? '18px' : '3px',
+            width: '14px', height: '14px', borderRadius: '50%',
+            background: 'white', transition: 'left 0.2s',
+          }} />
         </div>
+      </div>
 
-        {/* What's included */}
-        <div style={{ marginBottom: '20px' }}>
-          {[
-            ['🖼️', 'Upload your ad image (PNG/JPG)'],
-            ['🎬', `Upload 10-sec video (+₹${VIDEO_ADDON_PRICE})`, true],
-            ['🔗', 'Add your business website link'],
-            ['♾️', 'Permanent tile placement on the grid'],
-          ].map(([icon, text, addon]) => (
-            <div key={String(text)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <span style={{ fontSize: '16px' }}>{icon}</span>
-              <span style={{ fontSize: '13px', color: addon ? 'rgba(0,210,255,0.8)' : 'rgba(200,215,255,0.75)', flex: 1 }}>{String(text)}</span>
-            </div>
-          ))}
-        </div>
-
-        <button style={primaryBtn} onClick={onNext}>
-          🛒 &nbsp; CONTINUE TO PURCHASE
-        </button>
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <GhostBtn onClick={onClose}>Cancel</GhostBtn>
+        <PrimaryBtn onClick={onNext} fullWidth>Continue →</PrimaryBtn>
       </div>
     </div>
   )
 }
 
-// ── Step 2 — Business Form ───────────────────────────────────────────────────
+// ── Step 2 — Business Details ─────────────────────────────────────────────────
 
-function StepForm({
-  cellIndex,
-  basePrice,
-  onComplete,
-  onClose,
+const StepDetails = ({
+  hasVideo,
+  onBack,
+  onConfirm,
 }: {
-  cellIndex: number
-  basePrice: number
-  onComplete: (info: BusinessInfo, totalPaid: number) => void
-  onClose: () => void
-}) {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [link, setLink] = useState('')
+  hasVideo: boolean
+  onBack: () => void
+  onConfirm: (info: BusinessInfo, imagePreview: string | null) => void
+}) => {
+  const [name, setName]       = useState('')
+  const [email, setEmail]     = useState('')
+  const [link, setLink]       = useState('')
   const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [videoFile, setVideoFile] = useState<File | null>(null)
-  const [hasVideo, setHasVideo] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [focusedField, setFocusedField] = useState<string | null>(null)
+  const [videoPreview, setVideoPreview] = useState<string | null>(null)
+  const [errors, setErrors]   = useState<Record<string, string>>({})
 
-  const imageRef = useRef<HTMLInputElement>(null)
-  const videoRef = useRef<HTMLInputElement>(null)
+  const handleImage = useCallback((file: File) => {
+    const reader = new FileReader()
+    reader.onload = (e) => setImagePreview(e.target?.result as string)
+    reader.readAsDataURL(file)
+  }, [])
 
-  const totalPrice = basePrice + (hasVideo ? VIDEO_ADDON_PRICE : 0)
+  const handleVideo = useCallback((file: File) => {
+    setVideoPreview(URL.createObjectURL(file))
+  }, [])
 
   const validate = () => {
     const e: Record<string, string> = {}
     if (!name.trim()) e.name = 'Business name is required'
-    if (!email.trim()) e.email = 'Email is required'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = 'Enter a valid email'
-    if (hasVideo && !videoFile) e.video = 'Please upload a video file'
-    return e
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = 'Valid email is required'
+    if (hasVideo && !videoPreview) e.video = 'Please upload your video ad'
+    setErrors(e)
+    return Object.keys(e).length === 0
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => setImagePreview(ev.target?.result as string)
-    reader.readAsDataURL(file)
+  const submit = () => {
+    if (!validate()) return
+    onConfirm(
+      { name: name.trim(), email: email.trim(), link: link.trim() || undefined, imageUrl: imagePreview ?? undefined, hasVideo },
+      imagePreview,
+    )
   }
-
-  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setVideoFile(file)
-  }
-
-  const handleSubmit = () => {
-    const e = validate()
-    if (Object.keys(e).length > 0) { setErrors(e); return }
-
-    const info: BusinessInfo = {
-      name: name.trim(),
-      email: email.trim(),
-      link: link.trim() || undefined,
-      imageUrl: imagePreview || undefined,
-      videoUrl: videoFile ? URL.createObjectURL(videoFile) : undefined,
-      hasVideo,
-    }
-    onComplete(info, totalPrice)
-  }
-
-  const inputStyle = (field: string): React.CSSProperties => ({
-    ...input,
-    borderColor: errors[field]
-      ? 'rgba(255, 80, 80, 0.6)'
-      : focusedField === field
-      ? 'rgba(0, 180, 255, 0.7)'
-      : 'rgba(30, 80, 180, 0.4)',
-    boxShadow: focusedField === field ? '0 0 0 3px rgba(0,180,255,0.08)' : 'none',
-  })
 
   return (
-    <div>
-      <div style={header}>
-        <div>
-          <div style={{ fontSize: '11px', color: 'rgba(0,210,255,0.8)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '4px' }}>
-            STEP 2 OF 2
-          </div>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#fff' }}>Your Business Details</div>
-        </div>
-        <button style={closeBtn} onClick={onClose}>✕</button>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <Field label='Business Name' required>
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder='e.g. Acme Corp'
+        />
+        {errors.name && <span style={{ fontSize: '11px', color: '#f87171' }}>{errors.name}</span>}
+      </Field>
 
-      <div style={{ ...body, maxHeight: '70vh', overflowY: 'auto' }}>
+      <Field label='Business Email' required>
+        <Input
+          type='email'
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder='hello@yourbrand.com'
+        />
+        {errors.email && <span style={{ fontSize: '11px', color: '#f87171' }}>{errors.email}</span>}
+      </Field>
 
-        {/* Business Name */}
-        <div style={fieldGroup}>
-          <label style={label}>
-            Business Name <span style={{ color: 'rgba(255,80,80,0.9)' }}>*</span>
-          </label>
-          <input
-            style={inputStyle('name')}
-            placeholder="e.g. Sharma Electronics"
-            value={name}
-            onChange={e => { setName(e.target.value); setErrors(p => ({ ...p, name: '' })) }}
-            onFocus={() => setFocusedField('name')}
-            onBlur={() => setFocusedField(null)}
+      <Field label='Website Link'>
+        <Input
+          type='url'
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
+          placeholder='https://yourbrand.com'
+        />
+      </Field>
+
+      <Field label='Ad Image'>
+        <UploadZone
+          label='Drop PNG / JPG here or click to upload'
+          accept='image/png,image/jpeg,image/webp'
+          preview={imagePreview}
+          onFile={handleImage}
+          icon={<Upload style={{ width: 20, height: 20 }} />}
+        />
+      </Field>
+
+      {hasVideo && (
+        <Field label='Video Ad (10 sec max)' required>
+          <UploadZone
+            label='Drop MP4 / WebM here or click to upload'
+            accept='video/mp4,video/webm'
+            preview={videoPreview}
+            onFile={handleVideo}
+            icon={<Video style={{ width: 20, height: 20 }} />}
           />
-          {errors.name && <div style={{ color: 'rgba(255,100,100,0.9)', fontSize: '12px', marginTop: '5px' }}>{errors.name}</div>}
-        </div>
+          {errors.video && <span style={{ fontSize: '11px', color: '#f87171' }}>{errors.video}</span>}
+        </Field>
+      )}
 
-        {/* Email */}
-        <div style={fieldGroup}>
-          <label style={label}>
-            Business Email <span style={{ color: 'rgba(255,80,80,0.9)' }}>*</span>
-          </label>
-          <input
-            type="email"
-            style={inputStyle('email')}
-            placeholder="contact@yourbusiness.com"
-            value={email}
-            onChange={e => { setEmail(e.target.value); setErrors(p => ({ ...p, email: '' })) }}
-            onFocus={() => setFocusedField('email')}
-            onBlur={() => setFocusedField(null)}
-          />
-          {errors.email && <div style={{ color: 'rgba(255,100,100,0.9)', fontSize: '12px', marginTop: '5px' }}>{errors.email}</div>}
-        </div>
-
-        {/* Business Link */}
-        <div style={fieldGroup}>
-          <label style={label}>Business Website / Link</label>
-          <input
-            style={inputStyle('link')}
-            placeholder="https://yourbusiness.com"
-            value={link}
-            onChange={e => setLink(e.target.value)}
-            onFocus={() => setFocusedField('link')}
-            onBlur={() => setFocusedField(null)}
-          />
-        </div>
-
-        {/* Ad Image Upload */}
-        <div style={fieldGroup}>
-          <label style={label}>Ad Image (PNG / JPG)</label>
-          <input ref={imageRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageChange} />
-          <div
-            style={{
-              ...uploadBox,
-              background: imagePreview ? 'rgba(0,20,60,0.6)' : uploadBox.background,
-              borderColor: imagePreview ? 'rgba(0,210,255,0.5)' : 'rgba(40,120,255,0.4)',
-              padding: imagePreview ? '8px' : '20px',
-            }}
-            onClick={() => imageRef.current?.click()}
-          >
-            {imagePreview ? (
-              <img src={imagePreview} alt="Ad preview" style={{ width: '100%', maxHeight: '120px', objectFit: 'contain', borderRadius: '8px' }} />
-            ) : (
-              <>
-                <div style={{ fontSize: '24px', marginBottom: '6px' }}>🖼️</div>
-                <div style={{ fontWeight: 600, marginBottom: '3px' }}>Click to upload your ad image</div>
-                <div style={{ fontSize: '11px', opacity: 0.6 }}>PNG, JPG up to 10MB</div>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Video Upload — Optional with price addon */}
-        <div style={fieldGroup}>
-          <label style={label}>
-            10-Second Ad Video{' '}
-            <span style={{ color: 'rgba(0,210,255,0.9)', fontWeight: 700 }}>+₹{VIDEO_ADDON_PRICE}</span>
-            {' '}(Optional)
-          </label>
-
-          {/* Toggle */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '12px 14px',
-              background: hasVideo ? 'rgba(0, 40, 100, 0.5)' : 'rgba(5, 15, 40, 0.4)',
-              border: `1px solid ${hasVideo ? 'rgba(0,200,255,0.4)' : 'rgba(30,80,180,0.3)'}`,
-              borderRadius: '10px',
-              cursor: 'pointer',
-              marginBottom: hasVideo ? '10px' : '0',
-              transition: 'all 0.2s',
-            }}
-            onClick={() => { setHasVideo(v => !v); setVideoFile(null); setErrors(p => ({ ...p, video: '' })) }}
-          >
-            {/* Toggle switch */}
-            <div style={{
-              width: '36px', height: '20px', borderRadius: '10px',
-              background: hasVideo ? 'rgba(0,180,255,0.8)' : 'rgba(255,255,255,0.15)',
-              position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-            }}>
-              <div style={{
-                position: 'absolute', top: '3px',
-                left: hasVideo ? '19px' : '3px',
-                width: '14px', height: '14px', borderRadius: '50%',
-                background: '#fff', transition: 'left 0.2s',
-              }} />
-            </div>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: hasVideo ? 'rgba(0,210,255,0.9)' : 'rgba(180,200,255,0.7)' }}>
-                Add video to my tile
-              </div>
-              <div style={{ fontSize: '11px', color: 'rgba(120,150,200,0.6)', marginTop: '1px' }}>
-                10 seconds max • MP4/WebM
-              </div>
-            </div>
-          </div>
-
-          {hasVideo && (
-            <>
-              <input ref={videoRef} type="file" accept="video/mp4,video/webm" style={{ display: 'none' }} onChange={handleVideoChange} />
-              <div
-                style={{
-                  ...uploadBox,
-                  borderColor: videoFile ? 'rgba(0,210,255,0.5)' : errors.video ? 'rgba(255,80,80,0.5)' : 'rgba(40,120,255,0.4)',
-                }}
-                onClick={() => videoRef.current?.click()}
-              >
-                {videoFile ? (
-                  <div>
-                    <div style={{ fontSize: '20px', marginBottom: '4px' }}>✅</div>
-                    <div style={{ fontWeight: 600, color: 'rgba(0,210,255,0.9)', fontSize: '13px' }}>{videoFile.name}</div>
-                    <div style={{ fontSize: '11px', opacity: 0.5, marginTop: '2px' }}>Click to change</div>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ fontSize: '24px', marginBottom: '6px' }}>🎬</div>
-                    <div style={{ fontWeight: 600, marginBottom: '3px' }}>Click to upload your video</div>
-                    <div style={{ fontSize: '11px', opacity: 0.6 }}>MP4 or WebM • max 10 seconds</div>
-                  </>
-                )}
-              </div>
-              {errors.video && <div style={{ color: 'rgba(255,100,100,0.9)', fontSize: '12px', marginTop: '5px' }}>{errors.video}</div>}
-            </>
-          )}
-        </div>
-
-        {/* Price summary */}
-        <div style={{
-          background: 'rgba(0, 15, 45, 0.7)',
-          border: '1px solid rgba(0, 150, 255, 0.25)',
-          borderRadius: '12px',
-          padding: '14px 16px',
-          marginBottom: '16px',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-            <span style={{ fontSize: '13px', color: 'rgba(150,180,255,0.7)' }}>Tile #{cellIndex}</span>
-            <span style={{ fontSize: '13px', color: 'rgba(220,235,255,0.8)' }}>₹{basePrice}</span>
-          </div>
-          {hasVideo && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span style={{ fontSize: '13px', color: 'rgba(150,180,255,0.7)' }}>Video Addon</span>
-              <span style={{ fontSize: '13px', color: 'rgba(0,210,255,0.9)' }}>₹{VIDEO_ADDON_PRICE}</span>
-            </div>
-          )}
-          <div style={{ borderTop: '1px solid rgba(30,80,180,0.3)', marginTop: '8px', paddingTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>TOTAL</span>
-            <span style={{ fontSize: '18px', fontWeight: 900, color: '#fff' }}>₹{totalPrice}</span>
-          </div>
-        </div>
-
-        <button style={primaryBtn} onClick={handleSubmit}>
-          ✅ &nbsp; CONFIRM PURCHASE — ₹{totalPrice}
-        </button>
-        <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '11px', color: 'rgba(100,140,200,0.5)' }}>
-          * Business Name and Email are required fields
-        </div>
+      <div style={{ display: 'flex', gap: '10px', paddingTop: '4px' }}>
+        <GhostBtn onClick={onBack}>← Back</GhostBtn>
+        <PrimaryBtn onClick={submit} fullWidth>Confirm Purchase</PrimaryBtn>
       </div>
     </div>
   )
 }
 
-// ── Step 3 — Success ─────────────────────────────────────────────────────────
+// ── Step 3 — Success ──────────────────────────────────────────────────────────
 
-function StepSuccess({ businessName, onClose }: { businessName: string; onClose: () => void }) {
-  return (
-    <div style={successCard}>
-      <div style={{ fontSize: '56px', marginBottom: '16px' }}>🎉</div>
-      <div style={{ fontSize: '22px', fontWeight: 900, color: '#fff', marginBottom: '8px' }}>
-        Tile Purchased!
-      </div>
-      <div style={{ fontSize: '14px', color: 'rgba(150,190,255,0.8)', lineHeight: 1.6, marginBottom: '8px' }}>
-        Congratulations, <strong style={{ color: 'rgba(0,210,255,0.9)' }}>{businessName}</strong>!
-      </div>
-      <div style={{ fontSize: '13px', color: 'rgba(120,160,220,0.7)', lineHeight: 1.6, marginBottom: '24px' }}>
-        Your ad is now live on the NOads grid. Your tile will glow with a neon blue frame for the world to see.
-      </div>
-      <button style={primaryBtn} onClick={onClose}>
-        VIEW MY TILE
-      </button>
+const StepSuccess = ({ businessName, onClose }: { businessName: string; onClose: () => void }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', padding: '12px 0' }}>
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{
+        position: 'absolute', width: '80px', height: '80px', borderRadius: '50%',
+        background: 'rgba(0,210,255,0.12)', animation: 'ping 1.5s ease-out infinite',
+      }} />
+      <CheckCircle style={{ width: 52, height: 52, color: CYAN }} />
     </div>
-  )
-}
+    <div style={{ textAlign: 'center' }}>
+      <h3 style={{ fontWeight: 700, fontSize: '20px', color: 'white', margin: '0 0 6px' }}>You're Live!</h3>
+      <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', margin: 0 }}>
+        <span style={{ color: CYAN, fontWeight: 600 }}>{businessName}</span> is now permanently on the NoAds board.
+      </p>
+    </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', padding: '12px 16px', borderRadius: '12px', background: CYAN_DIM, border: `1px solid ${CYAN_BORDER}` }}>
+      {['Tile is permanently yours', 'Ad is visible globally', 'No renewals ever needed'].map((t) => (
+        <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+          <CheckCircle style={{ width: 13, height: 13, color: CYAN, flexShrink: 0 }} />
+          {t}
+        </div>
+      ))}
+    </div>
+    <PrimaryBtn onClick={onClose} fullWidth>Close</PrimaryBtn>
+  </div>
+)
 
-// ── Main Modal ───────────────────────────────────────────────────────────────
+// ── Modal shell ───────────────────────────────────────────────────────────────
+
+const STEP_LABELS: Record<Step, string> = {
+  review:  'Review Tile',
+  details: 'Your Business',
+  success: 'Confirmed!',
+}
 
 export const BuyModal = () => {
   const {
@@ -515,61 +415,115 @@ export const BuyModal = () => {
     buyModalCellY,
     closeBuyModal,
     completePurchase,
-  } = useShallowState(s => ({
-    buyModalOpen: s.buyModalOpen,
-    buyModalCellIndex: s.buyModalCellIndex,
-    buyModalCellX: s.buyModalCellX,
-    buyModalCellY: s.buyModalCellY,
-    closeBuyModal: s.closeBuyModal,
-    completePurchase: s.completePurchase,
+  } = useShallowState((state) => ({
+    buyModalOpen:       state.buyModalOpen,
+    buyModalCellIndex:  state.buyModalCellIndex,
+    buyModalCellX:      state.buyModalCellX,
+    buyModalCellY:      state.buyModalCellY,
+    closeBuyModal:      state.closeBuyModal,
+    completePurchase:   state.completePurchase,
   }))
 
-  const [step, setStep] = useState<'confirm' | 'form' | 'success'>('confirm')
-  const [purchasedName, setPurchasedName] = useState('')
+  const [step, setStep]         = useState<Step>('review')
+  const [hasVideo, setHasVideo] = useState(false)
+  const [bizName, setBizName]   = useState('')
 
-  const cellIndex = buyModalCellIndex ?? 0
-  const price = getPrice(buyModalCellX, buyModalCellY, window.innerWidth, window.innerHeight)
+  if (!buyModalOpen || buyModalCellIndex === null) return null
 
-  const handleClose = useCallback(() => {
+  const basePrice = getPrice(buyModalCellX, buyModalCellY, window.innerWidth, window.innerHeight)
+  const total     = basePrice + (hasVideo ? config.videoAddonPrice : 0)
+
+  const handleClose = () => {
     closeBuyModal()
-    setStep('confirm')
-  }, [closeBuyModal])
-
-  const handleComplete = useCallback((info: BusinessInfo, totalPaid: number) => {
-    completePurchase(cellIndex, price, totalPaid, info)
-    setPurchasedName(info.name)
-    setStep('success')
-  }, [cellIndex, price, completePurchase])
-
-  // Reset to confirm step when modal opens
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) handleClose()
+    setTimeout(() => { setStep('review'); setHasVideo(false); setBizName('') }, 300)
   }
 
-  if (!buyModalOpen) return null
+  const handleConfirm = (info: BusinessInfo) => {
+    setBizName(info.name)
+    completePurchase(buyModalCellIndex, basePrice, total, info)
+    setStep('success')
+  }
 
   return (
-    <div style={overlay} onClick={handleOverlayClick}>
-      <div style={card}>
-        {step === 'confirm' && (
-          <StepConfirm
-            cellIndex={cellIndex}
-            price={price}
-            onNext={() => setStep('form')}
-            onClose={handleClose}
-          />
-        )}
-        {step === 'form' && (
-          <StepForm
-            cellIndex={cellIndex}
-            basePrice={price}
-            onComplete={handleComplete}
-            onClose={handleClose}
-          />
-        )}
-        {step === 'success' && (
-          <StepSuccess businessName={purchasedName} onClose={handleClose} />
-        )}
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(0, 4, 18, 0.85)',
+        backdropFilter: 'blur(12px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000, padding: '16px',
+      }}
+    >
+      <div
+        style={{
+          width: '100%', maxWidth: '460px',
+          background: SURFACE,
+          border: `1px solid ${CARD_BORDER}`,
+          borderRadius: '22px',
+          boxShadow: '0 0 60px rgba(0, 150, 255, 0.15), 0 24px 80px rgba(0,0,0,0.7)',
+          overflow: 'hidden',
+          fontFamily: "'Space Grotesk', sans-serif",
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '18px 22px 16px',
+          borderBottom: `1px solid rgba(0,210,255,0.1)`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '30px', height: '30px', borderRadius: '8px',
+              background: 'linear-gradient(135deg, hsl(255 60% 28%), hsl(196 100% 38%))',
+              boxShadow: '0 0 10px rgba(0,210,255,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Zap style={{ width: 15, height: 15, color: 'white' }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '15px', color: 'white' }}>{STEP_LABELS[step]}</div>
+              <div style={{ fontSize: '11px', color: 'rgba(180,200,220,0.4)', letterSpacing: '0.06em' }}>
+                {step === 'success' ? 'NoAds Platform' : `Step ${step === 'review' ? 1 : 2} of 2`}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleClose}
+            style={{
+              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.5)', width: '32px', height: '32px',
+              borderRadius: '8px', cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s',
+            }}
+          >
+            <X style={{ width: 15, height: 15 }} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '22px' }}>
+          {step === 'review' && (
+            <StepReview
+              cellIndex={buyModalCellIndex}
+              basePrice={basePrice}
+              hasVideo={hasVideo}
+              onToggleVideo={() => setHasVideo((v) => !v)}
+              onNext={() => setStep('details')}
+              onClose={handleClose}
+            />
+          )}
+          {step === 'details' && (
+            <StepDetails
+              hasVideo={hasVideo}
+              onBack={() => setStep('review')}
+              onConfirm={handleConfirm}
+            />
+          )}
+          {step === 'success' && (
+            <StepSuccess businessName={bizName} onClose={handleClose} />
+          )}
+        </div>
       </div>
     </div>
   )
