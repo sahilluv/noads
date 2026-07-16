@@ -1,4 +1,5 @@
-import { Github, Info, Settings, Zap } from 'lucide-react'
+import { Github, Info, Settings, Zap, Search } from 'lucide-react'
+import { useState } from 'react'
 import { useShallowState } from '@/store'
 import config from '../../config'
 import { cn } from '../../utils/tw'
@@ -62,6 +63,53 @@ const BrandMark = () => (
   </div>
 )
 
+const SearchBar = () => {
+  const { ownedCells, voroforce } = useShallowState((state) => ({
+    ownedCells: state.ownedCells,
+    voroforce: state.voroforce
+  }))
+  const [query, setQuery] = useState('')
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!query.trim() || !voroforce) return
+
+    const lowerQuery = query.toLowerCase()
+    // Find the first cell that matches the business name
+    const match = Object.entries(ownedCells).find(([_, data]) => 
+      data.business?.name?.toLowerCase().includes(lowerQuery)
+    )
+
+    if (match) {
+      const cellIndex = parseInt(match[0])
+      // Select the cell programmatically
+      voroforce.controls.selectCell(cellIndex)
+      
+      // Pan camera to the cell if pinPointer is available
+      const cell = voroforce.cells[cellIndex]
+      if (cell && voroforce.controls.pinPointer) {
+        voroforce.controls.pinPointer(cell)
+      }
+    } else {
+      alert(`No brand found matching "${query}"`)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSearch} className='pointer-events-auto flex items-center relative mx-4 max-w-[200px] lg:max-w-[300px] w-full'>
+      <Search className='w-3.5 h-3.5 lg:w-4 lg:h-4 text-white/40 absolute left-3' />
+      <input 
+        type="text"
+        placeholder="Search brands..."
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        className='w-full bg-[rgba(255,255,255,0.03)] border border-[rgba(0,210,255,0.15)] rounded-full pl-9 pr-4 py-1.5 lg:py-2 text-xs lg:text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[hsl(196_100%_55%)] focus:bg-[rgba(0,210,255,0.03)] transition-all'
+        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+      />
+    </form>
+  )
+}
+
 export const Navbar = () => {
   const {
     settingsOpen,
@@ -86,11 +134,13 @@ export const Navbar = () => {
         background: 'linear-gradient(to bottom, rgba(5,8,24,0.85) 0%, transparent 100%)',
       }}
     >
-      {/* Left — Brand */}
-      <BrandMark />
+      <div className='flex items-center flex-1'>
+        <BrandMark />
+        <SearchBar />
+      </div>
 
       {/* Right — Controls */}
-      <div className='flex flex-row items-center gap-1'>
+      <div className='flex flex-row items-center gap-1 shrink-0'>
         <NavBtn onClick={toggleAboutOpen} active={aboutOpen}>
           <Info />
         </NavBtn>
