@@ -273,7 +273,7 @@ export const Dashboard = () => {
             <p className='text-xs text-white/25 italic px-1'>No tiles owned yet. Click a tile to get started.</p>
           ) : (
             <div className='flex flex-col gap-1.5 overflow-y-auto'>
-              {Object.entries(ownedCells).map(([idx, data]) => (
+              {Object.entries(ownedCells).slice(0, 50).map(([idx, data]) => (
                 <TileRow
                   key={idx}
                   index={idx}
