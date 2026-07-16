@@ -116,8 +116,7 @@ function drawAvailableCard(
   cardW: number, cardH: number,
   price: number,
   now: number,
-  cellIndex: number,
-  dummyImg: HTMLImageElement | null,
+  cellIndex: number
 ) {
   const bx = cx - cardW / 2
   const by = cy - cardH / 2
@@ -207,13 +206,8 @@ function drawAvailableCard(
   roundRect(ctx, innerX, innerY, innerW, innerH, cardR * 0.4)
   ctx.clip()
 
-  // Draw dummy image inside clip path
-  if (dummyImg?.complete && dummyImg.naturalWidth > 0) {
-    ctx.globalAlpha = 0.35
-    // Maintain aspect ratio or stretch? The original logic stretched it, let's keep that for now
-    ctx.drawImage(dummyImg, innerX, innerY, innerW, innerH)
-    ctx.globalAlpha = 1.0
-  }
+  // Remove dummy image inside clip path
+  ctx.globalAlpha = 1.0
 
   // Grid
   drawGrid(ctx, innerX, innerY, innerW, innerH, 6, 8, CYAN_GRID)
@@ -502,11 +496,9 @@ export const PriceOverlay = () => {
         }
       }
 
-      // 1. Draw Available Cards (with clipped dummy ads)
+      // 1. Draw Available Cards
       for (const item of availableCells) {
-        const dummyUrl = DUMMY_AD_URLS[item.cell.index % DUMMY_AD_URLS.length]
-        const dummyImg = loadImage(dummyUrl, imageCache)
-        drawAvailableCard(ctx, item.cx, item.cy, item.cardW, item.cardH, item.price, now, item.index, dummyImg)
+        drawAvailableCard(ctx, item.cx, item.cy, item.cardW, item.cardH, item.price, now, item.index)
       }
 
       // 2. Draw Translucent Ghost Mosaic
