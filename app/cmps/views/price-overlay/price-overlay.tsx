@@ -31,23 +31,35 @@ function roundRect(
   ctx.closePath()
 }
 
-function drawBracket(
+function drawBrackets(
   ctx: CanvasRenderingContext2D,
-  x: number, y: number,
+  x: number, y: number, w: number, h: number,
   armLen: number, lineW: number,
-  flipX: boolean, flipY: boolean,
   color: string,
 ) {
-  const sx = flipX ? -1 : 1
-  const sy = flipY ? -1 : 1
   ctx.save()
   ctx.strokeStyle = color
   ctx.lineWidth = lineW
   ctx.lineCap = 'square'
   ctx.beginPath()
-  ctx.moveTo(x + sx * armLen, y)
+  
+  // TL
+  ctx.moveTo(x + armLen, y)
   ctx.lineTo(x, y)
-  ctx.lineTo(x, y + sy * armLen)
+  ctx.lineTo(x, y + armLen)
+  // TR
+  ctx.moveTo(x + w - armLen, y)
+  ctx.lineTo(x + w, y)
+  ctx.lineTo(x + w, y + armLen)
+  // BL
+  ctx.moveTo(x + armLen, y + h)
+  ctx.lineTo(x, y + h)
+  ctx.lineTo(x, y + h - armLen)
+  // BR
+  ctx.moveTo(x + w - armLen, y + h)
+  ctx.lineTo(x + w, y + h)
+  ctx.lineTo(x + w, y + h - armLen)
+
   ctx.stroke()
   ctx.restore()
 }
@@ -61,41 +73,34 @@ function drawGrid(
   ctx.save()
   ctx.strokeStyle = color
   ctx.lineWidth = 0.5
-  ctx.fillStyle = color
+  ctx.beginPath()
 
   const cellW = w / cols
   const cellH = h / rows
 
   for (let c = 1; c < cols; c++) {
-    ctx.beginPath()
     ctx.moveTo(x + c * cellW, y)
     ctx.lineTo(x + c * cellW, y + h)
-    ctx.stroke()
   }
   for (let r = 1; r < rows; r++) {
-    ctx.beginPath()
     ctx.moveTo(x, y + r * cellH)
     ctx.lineTo(x + w, y + r * cellH)
-    ctx.stroke()
   }
 
+  // Draw plus signs in a single path
   const plusSize = Math.min(cellW, cellH) * 0.12
-  ctx.lineWidth = 0.6
   for (let c = 1; c < cols; c++) {
     for (let r = 1; r < rows; r++) {
       const px = x + c * cellW
       const py = y + r * cellH
-      ctx.beginPath()
       ctx.moveTo(px - plusSize, py)
       ctx.lineTo(px + plusSize, py)
-      ctx.stroke()
-      ctx.beginPath()
       ctx.moveTo(px, py - plusSize)
       ctx.lineTo(px, py + plusSize)
-      ctx.stroke()
     }
   }
 
+  ctx.stroke()
   ctx.restore()
 }
 
@@ -115,8 +120,7 @@ function drawAvailableCard(
   cx: number, cy: number,
   cardW: number, cardH: number,
   price: number,
-  now: number,
-  cellIndex: number
+  dummyImg: HTMLImageElement | null,
 ) {
   const bx = cx - cardW / 2
   const by = cy - cardH / 2
@@ -136,11 +140,7 @@ function drawAvailableCard(
   const innerX = bx + hPad * 0.6
   const innerW = cardW - hPad * 1.2
 
-  const pulse = 0.4 + 0.15 * Math.sin(now * 1.8 + cellIndex * 0.6)
-  ctx.save()
-  ctx.shadowColor = `rgba(0, 200, 255, ${pulse})`
-  ctx.shadowBlur = 14
-
+  // Remove expensive shadows for performance
   // Card background
   roundRect(ctx, bx, by, cardW, cardH, cardR)
   const bg = ctx.createLinearGradient(bx, by, bx, by + cardH)
@@ -154,7 +154,6 @@ function drawAvailableCard(
   ctx.strokeStyle = BORDER
   ctx.lineWidth = 1
   ctx.stroke()
-  ctx.shadowBlur = 0
   ctx.restore()
 
   ctx.save()
@@ -206,8 +205,13 @@ function drawAvailableCard(
   roundRect(ctx, innerX, innerY, innerW, innerH, cardR * 0.4)
   ctx.clip()
 
-  // Remove dummy image inside clip path
-  ctx.globalAlpha = 1.0
+  // Draw dummy image inside clip path
+  if (dummyImg?.complete && dummyImg.naturalWidth > 0) {
+    ctx.globalAlpha = 0.35
+    // Maintain aspect ratio or stretch? The original logic stretched it, let's keep that for now
+    ctx.drawImage(dummyImg, innerX, innerY, innerW, innerH)
+    ctx.globalAlpha = 1.0
+  }
 
   // Grid
   drawGrid(ctx, innerX, innerY, innerW, innerH, 6, 8, CYAN_GRID)
@@ -218,13 +222,7 @@ function drawAvailableCard(
   const bLineW = Math.max(0.8, cardW * 0.018)
   const bracketPad = cardW * 0.03
   
-  ctx.shadowColor = CYAN
-  ctx.shadowBlur = 6
-  drawBracket(ctx, innerX + bracketPad, innerY + bracketPad, bracketArm, bLineW, false, false, CYAN_MID)
-  drawBracket(ctx, innerX + innerW - bracketPad, innerY + bracketPad, bracketArm, bLineW, true, false, CYAN_MID)
-  drawBracket(ctx, innerX + bracketPad, innerY + innerH - bracketPad, bracketArm, bLineW, false, true, CYAN_MID)
-  drawBracket(ctx, innerX + innerW - bracketPad, innerY + innerH - bracketPad, bracketArm, bLineW, true, true, CYAN_MID)
-  ctx.shadowBlur = 0
+  drawBrackets(ctx, innerX + bracketPad, innerY + bracketPad, innerW - bracketPad * 2, innerH - bracketPad * 2, bracketArm, bLineW, CYAN_MID)
 
   // Center targeting reticle
   const reticleCX = innerX + innerW / 2
@@ -232,13 +230,8 @@ function drawAvailableCard(
   const reticleSize = Math.min(innerW, innerH) * 0.22
   const reticleArm = reticleSize * 0.38
 
-  ctx.shadowColor = CYAN
-  ctx.shadowBlur = 5
   const rLineW = bLineW * 0.85
-  drawBracket(ctx, reticleCX - reticleSize, reticleCY - reticleSize * 0.85, reticleArm, rLineW, false, false, CYAN_MID)
-  drawBracket(ctx, reticleCX + reticleSize, reticleCY - reticleSize * 0.85, reticleArm, rLineW, true, false, CYAN_MID)
-  drawBracket(ctx, reticleCX - reticleSize, reticleCY + reticleSize * 0.85, reticleArm, rLineW, false, true, CYAN_MID)
-  drawBracket(ctx, reticleCX + reticleSize, reticleCY + reticleSize * 0.85, reticleArm, rLineW, true, true, CYAN_MID)
+  drawBrackets(ctx, reticleCX - reticleSize, reticleCY - reticleSize * 0.85, reticleSize * 2, reticleSize * 1.7, reticleArm, rLineW, CYAN_MID)
 
   const plusSize = reticleSize * 0.28
   ctx.strokeStyle = CYAN_MID
@@ -251,7 +244,6 @@ function drawAvailableCard(
   ctx.moveTo(reticleCX, reticleCY - plusSize)
   ctx.lineTo(reticleCX, reticleCY + plusSize)
   ctx.stroke()
-  ctx.shadowBlur = 0
 
   // "BUY THIS TILE" text
   const txtY = innerY + innerH * 0.72
@@ -315,9 +307,6 @@ function drawAvailableCard(
   const btnY = footerY + (footerActualH - btnH) / 2
   const btnR = btnH / 2
 
-  ctx.shadowColor = `rgba(0, 210, 255, ${0.45 + 0.2 * Math.sin(now * 2.5 + cellIndex)})`
-  ctx.shadowBlur = 10
-
   roundRect(ctx, btnX, btnY, btnW, btnH, btnR)
   const btnGrad = ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnH)
   btnGrad.addColorStop(0, 'hsl(255 60% 30%)')
@@ -329,7 +318,6 @@ function drawAvailableCard(
   ctx.strokeStyle = 'rgba(0, 210, 255, 0.8)'
   ctx.lineWidth = 0.9
   ctx.stroke()
-  ctx.shadowBlur = 0
 
   const btnMidX = btnX + btnW / 2
   const btnMidY = btnY + btnH / 2
@@ -373,20 +361,14 @@ function drawOwnedCard(
   cx: number, cy: number,
   cardW: number, cardH: number,
   img: HTMLImageElement | null,
-  now: number,
-  cellIndex: number,
 ) {
   const bx = cx - cardW / 2
   const by = cy - cardH / 2
   const cardR = cardW * 0.09
   
   const GOLD = 'hsl(45, 100%, 55%)'
-  const GOLD_GLOW = `rgba(255, 180, 0, ${0.5 + 0.2 * Math.sin(now * 1.2 + cellIndex * 0.5)})`
 
   ctx.save()
-
-  ctx.shadowColor = GOLD_GLOW
-  ctx.shadowBlur = 16
 
   roundRect(ctx, bx, by, cardW, cardH, cardR)
   
@@ -411,7 +393,6 @@ function drawOwnedCard(
   ctx.strokeStyle = 'rgba(255, 190, 0, 0.85)'
   ctx.lineWidth = 1.2
   ctx.stroke()
-  ctx.shadowBlur = 0
 
   // "SOLD" badge top-left
   const hPad = cardW * 0.07
@@ -469,7 +450,6 @@ export const PriceOverlay = () => {
       ctx.clearRect(0, 0, W, H)
 
       const cells = vf.cells as Array<{ x: number; y: number; index: number }>
-      const now = performance.now() / 1000
 
       const availableCells = []
       const ownedCellsArr = []
@@ -496,9 +476,11 @@ export const PriceOverlay = () => {
         }
       }
 
-      // 1. Draw Available Cards
+      // 1. Draw Available Cards (with clipped dummy ads)
       for (const item of availableCells) {
-        drawAvailableCard(ctx, item.cx, item.cy, item.cardW, item.cardH, item.price, now, item.index)
+        const dummyUrl = DUMMY_AD_URLS[item.cell.index % DUMMY_AD_URLS.length]
+        const dummyImg = loadImage(dummyUrl, imageCache)
+        drawAvailableCard(ctx, item.cx, item.cy, item.cardW, item.cardH, item.price, dummyImg)
       }
 
       // 2. Draw Translucent Ghost Mosaic
@@ -515,7 +497,7 @@ export const PriceOverlay = () => {
         const customImageUrl = ownedCells[item.cell.index]?.business?.imageUrl
         const imageUrl = customImageUrl || DUMMY_AD_URLS[item.cell.index % DUMMY_AD_URLS.length]
         const img = loadImage(imageUrl, imageCache)
-        drawOwnedCard(ctx, item.cx, item.cy, item.cardW, item.cardH, img, now, item.index)
+        drawOwnedCard(ctx, item.cx, item.cy, item.cardW, item.cardH, img)
       }
     }
 
