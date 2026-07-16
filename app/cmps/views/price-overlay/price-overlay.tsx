@@ -2,6 +2,15 @@ import { useEffect, useRef } from 'react'
 import { store } from '../../../store'
 import { getPrice } from '../../../utils/pricing'
 
+// Rotating dummy ad images shown on all cells for demo
+const DUMMY_AD_URLS = [
+  '/assets/ad1.jpg',
+  '/assets/ad2.jpg',
+  '/assets/ad3.jpg',
+  '/assets/ad4.jpg',
+  '/assets/ad5.jpg',
+]
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function roundRect(
@@ -512,16 +521,38 @@ export const PriceOverlay = () => {
       // 3. Draw Owned Cards (so they remain completely untouched by the mosaic)
       for (const item of ownedCellsArr) {
         const customImageUrl = ownedCells[item.cell.index]?.business?.imageUrl
+        // Fall back to rotating dummy ad if no real image uploaded yet
+        const imageUrl = customImageUrl || DUMMY_AD_URLS[item.cell.index % DUMMY_AD_URLS.length]
         let img: HTMLImageElement | null = null
-        if (customImageUrl) {
-          if (!imageCache[customImageUrl]) {
+        if (imageUrl) {
+          if (!imageCache[imageUrl]) {
             const el = new Image()
-            el.src = customImageUrl
-            imageCache[customImageUrl] = el
+            el.src = imageUrl
+            imageCache[imageUrl] = el
           }
-          img = imageCache[customImageUrl]
+          img = imageCache[imageUrl]
         }
         drawOwnedCard(ctx, item.cx, item.cy, item.cardW, item.cardH, img, now, item.index)
+      }
+
+      // Also render ALL unsold cells with dummy images as a background layer
+      for (const item of availableCells) {
+        const dummyUrl = DUMMY_AD_URLS[item.cell.index % DUMMY_AD_URLS.length]
+        if (!imageCache[dummyUrl]) {
+          const el = new Image()
+          el.src = dummyUrl
+          imageCache[dummyUrl] = el
+        }
+        const dummyImg = imageCache[dummyUrl]
+        if (dummyImg?.complete && dummyImg.naturalWidth > 0) {
+          // Draw the dummy image dimly behind the available card
+          const bx = item.cx - item.cardW / 2
+          const by = item.cy - item.cardH / 2
+          ctx.save()
+          ctx.globalAlpha = 0.35
+          ctx.drawImage(dummyImg, bx, by, item.cardW, item.cardH)
+          ctx.restore()
+        }
       }
     }
 
