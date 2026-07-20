@@ -365,6 +365,7 @@ function drawOwnedCard(
   img: HTMLImageElement | null,
   now: number,
   cellIndex: number,
+  isActive: boolean,
 ) {
   const bx = cx - cardW / 2
   const by = cy - cardH / 2
@@ -375,8 +376,10 @@ function drawOwnedCard(
 
   ctx.save()
 
-  ctx.shadowColor = GOLD_GLOW
-  ctx.shadowBlur = 16
+  if (isActive) {
+    ctx.shadowColor = GOLD_GLOW
+    ctx.shadowBlur = 16
+  }
 
   roundRect(ctx, bx, by, cardW, cardH, cardR)
   
@@ -458,6 +461,13 @@ export const PriceOverlay = () => {
       const H = canvas.height
       ctx.clearRect(0, 0, W, H)
 
+      // @ts-ignore
+      const activeCells = new Set<number>()
+      // @ts-ignore
+      if (vf.cells.focused) activeCells.add(vf.cells.focused.index)
+      // @ts-ignore
+      if (vf.cells.selected) activeCells.add(vf.cells.selected.index)
+
       const cells = vf.cells as Array<{ x: number; y: number; index: number }>
       const now = performance.now() / 1000
 
@@ -473,6 +483,7 @@ export const PriceOverlay = () => {
 
         const price = getPrice(cx, cy, W, H)
         const isOwned = !!ownedCells[cell.index]
+        const isActive = activeCells.has(cell.index)
         
         const tier = (price - 100) / 900
         const base = Math.min(W, H) * 0.063
@@ -480,8 +491,9 @@ export const PriceOverlay = () => {
         const cardH = cardW * 1.42
 
         if (isOwned) {
-          ownedCellsArr.push({ cell, cx, cy, price, cardW, cardH, index: i })
-        } else {
+          ownedCellsArr.push({ cell, cx, cy, price, cardW, cardH, index: i, isActive })
+        } else if (isActive) {
+          // Only draw available cards if they are actively focused or selected
           availableCells.push({ cell, cx, cy, price, cardW, cardH, index: i })
         }
       }
@@ -504,7 +516,7 @@ export const PriceOverlay = () => {
       for (const item of ownedCellsArr) {
         const customImageUrl = ownedCells[item.cell.index]?.business?.imageUrl
         const img = customImageUrl ? loadImage(customImageUrl, imageCache) : null
-        drawOwnedCard(ctx, item.cx, item.cy, item.cardW, item.cardH, img, now, item.index)
+        drawOwnedCard(ctx, item.cx, item.cy, item.cardW, item.cardH, img, now, item.index, item.isActive)
       }
     }
 
