@@ -102,259 +102,7 @@ function loadImage(url: string, cache: Record<string, HTMLImageElement>): HTMLIm
 
 // ── Main card drawing function ──────────────────────────────────────────────
 
-function drawAvailableCard(
-  ctx: CanvasRenderingContext2D,
-  cx: number, cy: number,
-  cardW: number, cardH: number,
-  price: number,
-  now: number,
-  cellIndex: number,
-) {
-  const bx = cx - cardW / 2
-  const by = cy - cardH / 2
-  const cardR = cardW * 0.09
 
-  const CYAN = 'hsl(196, 100%, 55%)'
-  const CYAN_MID = 'rgba(0, 210, 255, 0.55)'
-  const CYAN_GRID = 'rgba(0, 180, 220, 0.12)'
-  const BORDER = 'rgba(0, 210, 255, 0.25)'
-
-  const hPad = cardW * 0.07
-  const headerH = cardH * 0.13
-  const footerH = cardH * 0.20
-  const gapH = cardH * 0.025
-  const innerY = by + headerH + gapH
-  const innerH = cardH - headerH - footerH - gapH * 2
-  const innerX = bx + hPad * 0.6
-  const innerW = cardW - hPad * 1.2
-
-  const pulse = 0.4 + 0.15 * Math.sin(now * 1.8 + cellIndex * 0.6)
-  ctx.save()
-  ctx.shadowColor = `rgba(0, 200, 255, ${pulse})`
-  ctx.shadowBlur = 14
-
-  // Card background
-  roundRect(ctx, bx, by, cardW, cardH, cardR)
-  const bg = ctx.createLinearGradient(bx, by, bx, by + cardH)
-  bg.addColorStop(0, 'rgba(5, 9, 28, 0.97)')
-  bg.addColorStop(1, 'rgba(8, 14, 36, 0.97)')
-  ctx.fillStyle = bg
-  ctx.fill()
-
-  // Card border
-  roundRect(ctx, bx, by, cardW, cardH, cardR)
-  ctx.strokeStyle = BORDER
-  ctx.lineWidth = 1
-  ctx.stroke()
-  ctx.shadowBlur = 0
-  ctx.restore()
-
-  ctx.save()
-
-  // Header row
-  const headerMidY = by + headerH * 0.52
-  const tagSize = Math.max(4, cardW * 0.065)
-  const tagX = bx + hPad
-  const tagY = headerMidY
-
-  ctx.save()
-  ctx.translate(tagX + tagSize * 0.55, tagY)
-  ctx.rotate(Math.PI / 4)
-  ctx.strokeStyle = CYAN
-  ctx.lineWidth = 0.8
-  const ts = tagSize * 0.38
-  ctx.strokeRect(-ts, -ts, ts * 2, ts * 2)
-  ctx.restore()
-
-  const lblFont = Math.max(4, cardW * 0.09)
-  ctx.font = `700 ${lblFont}px 'Space Grotesk', system-ui, sans-serif`
-  ctx.fillStyle = CYAN
-  ctx.textAlign = 'left'
-  ctx.textBaseline = 'middle'
-  ctx.fillText('AVAILABLE', bx + hPad + tagSize * 1.3, headerMidY)
-
-  const dotSpacing = cardW * 0.038
-  const dotMenuX = bx + cardW - hPad
-  for (let d = 0; d < 3; d++) {
-    ctx.beginPath()
-    ctx.arc(dotMenuX - dotSpacing * (2 - d), headerMidY, cardW * 0.018, 0, Math.PI * 2)
-    ctx.fillStyle = CYAN_MID
-    ctx.fill()
-  }
-
-  ctx.beginPath()
-  ctx.moveTo(bx + hPad * 0.5, by + headerH)
-  ctx.lineTo(bx + cardW - hPad * 0.5, by + headerH)
-  ctx.strokeStyle = 'rgba(0, 210, 255, 0.15)'
-  ctx.lineWidth = 0.6
-  ctx.stroke()
-
-  // Inner area
-  roundRect(ctx, innerX, innerY, innerW, innerH, cardR * 0.4)
-  ctx.fillStyle = 'rgba(2, 6, 18, 0.85)'
-  ctx.fill()
-
-  ctx.save()
-  roundRect(ctx, innerX, innerY, innerW, innerH, cardR * 0.4)
-  ctx.clip()
-
-
-  // Grid
-  drawGrid(ctx, innerX, innerY, innerW, innerH, 6, 8, CYAN_GRID)
-  ctx.restore()
-
-  // Corner brackets
-  const bracketArm = Math.min(innerW, innerH) * 0.16
-  const bLineW = Math.max(0.8, cardW * 0.018)
-  const bracketPad = cardW * 0.03
-  
-  ctx.shadowColor = CYAN
-  ctx.shadowBlur = 6
-  drawBracket(ctx, innerX + bracketPad, innerY + bracketPad, bracketArm, bLineW, false, false, CYAN_MID)
-  drawBracket(ctx, innerX + innerW - bracketPad, innerY + bracketPad, bracketArm, bLineW, true, false, CYAN_MID)
-  drawBracket(ctx, innerX + bracketPad, innerY + innerH - bracketPad, bracketArm, bLineW, false, true, CYAN_MID)
-  drawBracket(ctx, innerX + innerW - bracketPad, innerY + innerH - bracketPad, bracketArm, bLineW, true, true, CYAN_MID)
-  ctx.shadowBlur = 0
-
-  // Center targeting reticle
-  const reticleCX = innerX + innerW / 2
-  const reticleCY = innerY + innerH * 0.42
-  const reticleSize = Math.min(innerW, innerH) * 0.22
-  const reticleArm = reticleSize * 0.38
-
-  ctx.shadowColor = CYAN
-  ctx.shadowBlur = 5
-  const rLineW = bLineW * 0.85
-  drawBracket(ctx, reticleCX - reticleSize, reticleCY - reticleSize * 0.85, reticleArm, rLineW, false, false, CYAN_MID)
-  drawBracket(ctx, reticleCX + reticleSize, reticleCY - reticleSize * 0.85, reticleArm, rLineW, true, false, CYAN_MID)
-  drawBracket(ctx, reticleCX - reticleSize, reticleCY + reticleSize * 0.85, reticleArm, rLineW, false, true, CYAN_MID)
-  drawBracket(ctx, reticleCX + reticleSize, reticleCY + reticleSize * 0.85, reticleArm, rLineW, true, true, CYAN_MID)
-
-  const plusSize = reticleSize * 0.28
-  ctx.strokeStyle = CYAN_MID
-  ctx.lineWidth = rLineW * 0.9
-  ctx.beginPath()
-  ctx.moveTo(reticleCX - plusSize, reticleCY)
-  ctx.lineTo(reticleCX + plusSize, reticleCY)
-  ctx.stroke()
-  ctx.beginPath()
-  ctx.moveTo(reticleCX, reticleCY - plusSize)
-  ctx.lineTo(reticleCX, reticleCY + plusSize)
-  ctx.stroke()
-  ctx.shadowBlur = 0
-
-  // "BUY THIS TILE" text
-  const txtY = innerY + innerH * 0.72
-  const titleFont = Math.max(5, cardW * 0.08)
-  ctx.font = `700 ${titleFont}px 'Space Grotesk', system-ui, sans-serif`
-  ctx.fillStyle = 'rgba(210, 240, 255, 0.95)'
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.letterSpacing = `${cardW * 0.012}px`
-  ctx.fillText('BUY THIS TILE', reticleCX, txtY)
-  ctx.letterSpacing = '0px'
-
-  const dashW = cardW * 0.1
-  ctx.beginPath()
-  ctx.moveTo(reticleCX - dashW / 2, txtY + titleFont * 1.1)
-  ctx.lineTo(reticleCX + dashW / 2, txtY + titleFont * 1.1)
-  ctx.strokeStyle = CYAN
-  ctx.lineWidth = Math.max(0.8, cardW * 0.015)
-  ctx.stroke()
-
-  // Footer
-  const footerY = innerY + innerH + gapH
-  const footerActualH = cardH - (footerY - by) - gapH * 0.5
-  const footerR = cardR * 0.6
-
-  roundRect(ctx, bx + hPad * 0.4, footerY, cardW - hPad * 0.8, footerActualH, footerR)
-  ctx.fillStyle = 'rgba(2, 6, 18, 0.95)'
-  ctx.fill()
-  roundRect(ctx, bx + hPad * 0.4, footerY, cardW - hPad * 0.8, footerActualH, footerR)
-  ctx.strokeStyle = 'rgba(0, 210, 255, 0.15)'
-  ctx.lineWidth = 0.7
-  ctx.stroke()
-
-  const footerMidY = footerY + footerActualH / 2
-  const leftX = bx + hPad * 1.0
-  const divX = bx + cardW * 0.42
-
-  const priceFont = Math.max(4, cardW * 0.075)
-  ctx.font = `500 ${priceFont}px 'Space Grotesk', system-ui, sans-serif`
-  ctx.fillStyle = 'rgba(180, 200, 220, 0.55)'
-  ctx.textAlign = 'left'
-  ctx.textBaseline = 'middle'
-  ctx.fillText('PRICE', leftX, footerMidY - priceFont * 0.9)
-
-  const valFont = Math.max(7, cardW * 0.16)
-  ctx.font = `700 ${valFont}px 'Space Mono', monospace`
-  ctx.fillStyle = 'rgba(235, 245, 255, 0.95)'
-  ctx.fillText(`₹${price}`, leftX, footerMidY + priceFont * 0.4)
-
-  ctx.beginPath()
-  ctx.moveTo(divX, footerY + footerActualH * 0.15)
-  ctx.lineTo(divX, footerY + footerActualH * 0.85)
-  ctx.strokeStyle = 'rgba(0, 210, 255, 0.15)'
-  ctx.lineWidth = 0.7
-  ctx.stroke()
-
-  // Buy button
-  const btnX = divX + cardW * 0.04
-  const btnW = cardW - (divX - bx) - hPad * 1.1
-  const btnH = footerActualH * 0.72
-  const btnY = footerY + (footerActualH - btnH) / 2
-  const btnR = btnH / 2
-
-  ctx.shadowColor = `rgba(0, 210, 255, ${0.45 + 0.2 * Math.sin(now * 2.5 + cellIndex)})`
-  ctx.shadowBlur = 10
-
-  roundRect(ctx, btnX, btnY, btnW, btnH, btnR)
-  const btnGrad = ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnH)
-  btnGrad.addColorStop(0, 'hsl(255 60% 30%)')
-  btnGrad.addColorStop(1, 'hsl(196 100% 40%)')
-  ctx.fillStyle = btnGrad
-  ctx.fill()
-
-  roundRect(ctx, btnX, btnY, btnW, btnH, btnR)
-  ctx.strokeStyle = 'rgba(0, 210, 255, 0.8)'
-  ctx.lineWidth = 0.9
-  ctx.stroke()
-  ctx.shadowBlur = 0
-
-  const btnMidX = btnX + btnW / 2
-  const btnMidY = btnY + btnH / 2
-  const btnFont = Math.max(4, cardW * 0.082)
-  const iconSize = btnFont * 1.1
-  const totalBtnW = iconSize * 1.6 + btnFont * 3.5
-  const iconX = btnMidX - totalBtnW / 2
-  const textBtnX = iconX + iconSize * 1.8
-
-  ctx.strokeStyle = 'rgba(255,255,255,0.92)'
-  ctx.lineWidth = Math.max(0.6, cardW * 0.012)
-  ctx.beginPath()
-  ctx.moveTo(iconX, btnMidY - iconSize * 0.45)
-  ctx.lineTo(iconX + iconSize * 0.15, btnMidY - iconSize * 0.45)
-  ctx.lineTo(iconX + iconSize * 0.38, btnMidY + iconSize * 0.15)
-  ctx.lineTo(iconX + iconSize * 1.1, btnMidY + iconSize * 0.15)
-  ctx.lineTo(iconX + iconSize * 1.25, btnMidY - iconSize * 0.18)
-  ctx.lineTo(iconX + iconSize * 0.3, btnMidY - iconSize * 0.18)
-  ctx.stroke()
-  ctx.beginPath()
-  ctx.arc(iconX + iconSize * 0.5, btnMidY + iconSize * 0.37, iconSize * 0.12, 0, Math.PI * 2)
-  ctx.fillStyle = 'rgba(255,255,255,0.92)'
-  ctx.fill()
-  ctx.beginPath()
-  ctx.arc(iconX + iconSize * 1.0, btnMidY + iconSize * 0.37, iconSize * 0.12, 0, Math.PI * 2)
-  ctx.fill()
-
-  ctx.font = `700 ${btnFont}px 'Space Grotesk', system-ui, sans-serif`
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'
-  ctx.textAlign = 'left'
-  ctx.textBaseline = 'middle'
-  ctx.fillText('BUY TILE', textBtnX, btnMidY)
-
-  ctx.restore()
-}
 
 // ── Owned cell (ad placed) ──────────────────────────────────────────────────
 
@@ -471,7 +219,6 @@ export const PriceOverlay = () => {
       const cells = vf.cells as Array<{ x: number; y: number; index: number }>
       const now = performance.now() / 1000
 
-      const availableCells = []
       const ownedCellsArr = []
 
       for (let i = 0; i < cells.length; i++) {
@@ -492,22 +239,14 @@ export const PriceOverlay = () => {
 
         if (isOwned) {
           ownedCellsArr.push({ cell, cx, cy, price, cardW, cardH, index: i, isActive })
-        } else if (isActive) {
-          // Only draw available cards if they are actively focused or selected
-          availableCells.push({ cell, cx, cy, price, cardW, cardH, index: i })
         }
       }
 
-      // 1. Draw Available Cards
-      for (const item of availableCells) {
-        // drawAvailableCard(ctx, item.cx, item.cy, item.cardW, item.cardH, item.price, now, item.index)
-      }
-
-      // 2. Draw Opaque Mosaic
+      // 2. Draw Translucent Ghost Mosaic
       if (mosaicImg?.complete) {
         ctx.save()
-        ctx.globalAlpha = 1.0
-        // ctx.globalCompositeOperation = 'screen'
+        ctx.globalAlpha = 0.3
+        ctx.globalCompositeOperation = 'screen'
         ctx.drawImage(mosaicImg, 0, 0, W, H)
         ctx.restore()
       }
