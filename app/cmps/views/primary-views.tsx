@@ -1,4 +1,3 @@
-import { Dashboard } from '../layout/dashboard'
 import { About } from './about'
 import { HotkeysView } from './hotkeys'
 import { LowFpsAlert } from './low-fps-alert'
@@ -8,7 +7,6 @@ import { Settings } from './settings'
 const PrimaryViews = () => (
   <>
     <PriceOverlay />
-    <Dashboard />
     <Settings />
     <About />
     <LowFpsAlert />
