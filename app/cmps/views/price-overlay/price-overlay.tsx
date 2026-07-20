@@ -126,7 +126,7 @@ export const PriceOverlay = () => {
     window.addEventListener('resize', resize)
 
     const imageCache: Record<string, HTMLImageElement> = {}
-    const mosaicImg = loadImage('/assets/mosaic.jpg', imageCache)
+    const mosaicImg = loadImage('/assets/nike_ad.jpg', imageCache)
 
     const draw = () => {
       rafRef.current = requestAnimationFrame(draw)
@@ -177,7 +177,7 @@ export const PriceOverlay = () => {
       // 2. Draw Translucent Ghost Mosaic
       if (mosaicImg?.complete) {
         ctx.save()
-        ctx.globalAlpha = 0.3
+        ctx.globalAlpha = 0.7
         ctx.globalCompositeOperation = 'screen'
         ctx.drawImage(mosaicImg, 0, 0, W, H)
         ctx.restore()
