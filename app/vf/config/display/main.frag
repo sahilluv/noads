@@ -739,20 +739,17 @@ vec3 hsl2rgb(float h, float s, float l) {
     return rgb + m;
 }
 
-// Assigns a vivid, attractive colour to each cell
+// Assigns a dark, colourless style to each cell so the background mosaic is visible
 void randomCellColor(inout vec3 c, inout float a, in Plot plot) {
-    // Use golden-ratio hue spread so neighbours never share a hue
-    float hue = fract(float(plot.indices.x) * 0.618033988749);
-    // Vary saturation & lightness slightly per cell for depth
-    float sat = 0.72 + 0.18 * randomColorChannel(plot.indices.x + 7u);
-    float lit = 0.38 + 0.18 * randomColorChannel(plot.indices.x + 13u);
-    c = hsl2rgb(hue, sat, lit);
-    // Subtle animated pulse near the pointer / center force
+    // Very dark base color
+    c = vec3(0.03, 0.04, 0.06); 
+    
+    // Subtle animated pulse near the pointer
     vec2 cellCoords = fetchAspectCellCoords(plot.indices.x);
     vec2 pointerCoords = aspectCoords(rawCoords(fPointer));
     float d = length(cellCoords - pointerCoords);
-    float glow = exp(-d * d * 4.0) * 0.25 * (0.5 + 0.5 * sin(iTime * 2.0));
-    c = mix(c, vec3(1.0), glow);
+    float glow = exp(-d * d * 4.0) * 0.15 * (0.5 + 0.5 * sin(iTime * 2.0));
+    c = mix(c, vec3(0.3, 0.4, 0.5), glow);
 }
 
 vec2 getMirroredTileUV(vec2 uv, float shrinkAmount) {
