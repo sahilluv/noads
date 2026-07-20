@@ -503,11 +503,11 @@ export const PriceOverlay = () => {
         // drawAvailableCard(ctx, item.cx, item.cy, item.cardW, item.cardH, item.price, now, item.index)
       }
 
-      // 2. Draw Translucent Ghost Mosaic
+      // 2. Draw Opaque Mosaic
       if (mosaicImg?.complete) {
         ctx.save()
-        ctx.globalAlpha = 0.3
-        ctx.globalCompositeOperation = 'screen'
+        ctx.globalAlpha = 1.0
+        // ctx.globalCompositeOperation = 'screen'
         ctx.drawImage(mosaicImg, 0, 0, W, H)
         ctx.restore()
       }
