@@ -500,7 +500,7 @@ export const PriceOverlay = () => {
 
       // 1. Draw Available Cards
       for (const item of availableCells) {
-        drawAvailableCard(ctx, item.cx, item.cy, item.cardW, item.cardH, item.price, now, item.index)
+        // drawAvailableCard(ctx, item.cx, item.cy, item.cardW, item.cardH, item.price, now, item.index)
       }
 
       // 2. Draw Translucent Ghost Mosaic
