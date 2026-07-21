@@ -283,9 +283,7 @@ const StepDetails = ({
   const [errors, setErrors]   = useState<Record<string, string>>({})
 
   const handleImage = useCallback((file: File) => {
-    const reader = new FileReader()
-    reader.onload = (e) => setImagePreview(e.target?.result as string)
-    reader.readAsDataURL(file)
+    setImagePreview(URL.createObjectURL(file))
   }, [])
 
   const handleVideo = useCallback((file: File) => {
