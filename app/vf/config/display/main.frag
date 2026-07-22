@@ -739,17 +739,51 @@ vec3 hsl2rgb(float h, float s, float l) {
     return rgb + m;
 }
 
-// Assigns a dark, colourless style to each cell so the background mosaic is visible
+// Assigns a space-themed, neon blue colour to each cell
 void randomCellColor(inout vec3 c, inout float a, in Plot plot) {
-    // Very dark base color
-    c = vec3(0.03, 0.04, 0.06); 
+    // Space theme: Hues restricted to Blues, Cyans, and Purples (0.55 to 0.75 in HSL)
+    float baseHue = 0.55 + 0.20 * randomColorChannel(plot.indices.x);
     
-    // Subtle animated pulse near the pointer
+    // Saturation is high for that neon look
+    float sat = 0.80 + 0.20 * randomColorChannel(plot.indices.x + 7u);
+    
+    // Most cells are dark (deep space), but a few pop as bright neon
+    float randL = randomColorChannel(plot.indices.x + 13u);
+    float lit = 0.10 + 0.20 * randL;
+    
+    // ~15% chance to be a bright neon blue/cyan cell
+    if (randomColorChannel(plot.indices.x + 21u) > 0.85) {
+        baseHue = 0.5 + 0.1 * randomColorChannel(plot.indices.x); // Cyan to Blue
+        lit = 0.5 + 0.3 * randL; // Bright!
+    }
+    
+    c = hsl2rgb(baseHue, sat, lit);
+    
+    // Calculate distance from center (0,0) in world space
+    // cellCoords is normalized around 0.5, so center is (0.5, 0.5)
+    // Actually cellCoords from fetchAspectCellCoords might be [-aspect/2, aspect/2] or [0,1].
+    // Assuming distance from origin can be calculated from cellCoords
     vec2 cellCoords = fetchAspectCellCoords(plot.indices.x);
+    float distFromCenter = length(cellCoords);
+    float proximity = clamp(1.0 - (distFromCenter / 1.0), 0.0, 1.0); // maxRadius approximated as 1.0 in normalized coords
+
+    // Dynamic pulse frequency
+    float pulseSpeed = mix(1.0, 4.0, proximity);
+    float pulse = (sin(iTime * pulseSpeed) + 1.0) * 0.5;
+
+    // Interpolate color from Neon Blue to Prime Hot Pink
+    vec3 u_baseNeonBlue = c; // Use original cell color as base
+    vec3 u_primeHotPink = vec3(1.0, 0.1, 0.8);
+    vec3 baseGlowColor = mix(u_baseNeonBlue, u_primeHotPink, pow(proximity, 1.8));
+    float finalIntensity = mix(0.6, 1.4, proximity) + (pulse * 0.25 * proximity);
+
+    // Subtle animated pulse near the pointer / center force
     vec2 pointerCoords = aspectCoords(rawCoords(fPointer));
     float d = length(cellCoords - pointerCoords);
-    float glow = exp(-d * d * 4.0) * 0.15 * (0.5 + 0.5 * sin(iTime * 2.0));
-    c = mix(c, vec3(0.3, 0.4, 0.5), glow);
+    float glow = exp(-d * d * 4.0) * 0.4 * (0.5 + 0.5 * sin(iTime * 2.0));
+    
+    c = baseGlowColor * finalIntensity;
+    c = mix(c, vec3(0.1, 0.9, 1.0), glow);
 }
 
 vec2 getMirroredTileUV(vec2 uv, float shrinkAmount) {

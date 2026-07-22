@@ -1,7 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
-
 @custom-variant light (&:is(.light *));
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant mouse {
@@ -9,91 +8,92 @@
     @slot
   }
 }
-
-/* ── NoAds Design Tokens ──────────────────────────────────────────────────── */
 :root {
-  /* Surfaces */
-  --background:          hsl(228 30% 4%);
-  --foreground:          hsl(210 40% 96%);
-  --card:                hsl(228 28% 7%);
-  --card-foreground:     hsl(210 40% 96%);
-  --popover:             hsl(228 28% 7%);
-  --popover-foreground:  hsl(210 40% 96%);
-
-  /* Brand */
-  --primary:             hsl(196 100% 55%);   /* neon cyan */
-  --primary-foreground:  hsl(228 30% 4%);
-  --secondary:           hsl(255 60% 18%);    /* deep indigo */
-  --secondary-foreground: hsl(210 40% 96%);
-
-  /* State */
-  --muted:               hsl(228 20% 12%);
-  --muted-foreground:    hsl(220 15% 55%);
-  --accent:              hsl(255 60% 22%);
-  --accent-foreground:   hsl(196 100% 55%);
-  --destructive:         hsl(0 72% 51%);
+  --background: hsl(0 0% 3.9%);
+  --foreground: hsl(0 0% 98%);
+  --card: hsl(0 0% 3.9%);
+  --card-foreground: hsl(0 0% 98%);
+  --popover: hsl(0 0% 3.9%);
+  --popover-foreground: hsl(0 0% 98%);
+  --primary: hsl(0 0% 98%);
+  --primary-foreground: hsl(0 0% 9%);
+  --secondary: hsl(0 0% 14.9%);
+  --secondary-foreground: hsl(0 0% 98%);
+  --muted: hsl(0 0% 14.9%);
+  --muted-foreground: hsl(0 0% 63.9%);
+  --accent: hsl(0 0% 14.9%);
+  --accent-foreground: hsl(0 0% 98%);
+  --destructive: hsl(0 62.8% 30.6%);
   --destructive-foreground: hsl(0 0% 98%);
-
-  /* Structure */
-  --border:              hsl(228 20% 14%);
-  --input:               hsl(228 20% 14%);
-  --ring:                hsl(196 100% 55%);
-  --radius:              0.75rem;
-
-  /* NoAds custom */
-  --noads-glow:          0 0 18px rgba(0, 210, 255, 0.45);
-  --noads-glow-strong:   0 0 32px rgba(0, 210, 255, 0.75);
-  --noads-indigo-glow:   0 0 18px rgba(120, 80, 255, 0.45);
-  --noads-surface:       rgba(8, 14, 36, 0.92);
-  --noads-border:        rgba(0, 210, 255, 0.18);
+  --border: hsl(0 0% 14.9%);
+  --input: hsl(0 0% 14.9%);
+  --ring: hsl(0 0% 83.1%);
+  --chart-1: hsl(220 70% 50%);
+  --chart-2: hsl(160 60% 45%);
+  --chart-3: hsl(30 80% 55%);
+  --chart-4: hsl(280 65% 60%);
+  --chart-5: hsl(340 75% 55%);
+  --radius: 0.6rem;
 }
 
 .light {
-  --background:          hsl(210 40% 96%);
-  --foreground:          hsl(228 30% 8%);
-  --card:                hsl(0 0% 100%);
-  --card-foreground:     hsl(228 30% 8%);
-  --popover:             hsl(0 0% 100%);
-  --popover-foreground:  hsl(228 30% 8%);
-  --primary:             hsl(228 70% 40%);
-  --primary-foreground:  hsl(0 0% 100%);
-  --secondary:           hsl(210 20% 90%);
-  --secondary-foreground: hsl(228 30% 8%);
-  --muted:               hsl(210 20% 92%);
-  --muted-foreground:    hsl(220 15% 42%);
-  --accent:              hsl(210 20% 88%);
-  --accent-foreground:   hsl(228 70% 40%);
-  --destructive:         hsl(0 84% 60%);
+  /*--background: hsl(0 0% 100%);*/
+  --background: hsl(30, 13%, 64%);
+  --foreground: hsl(0 0% 3.9%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(0 0% 3.9%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(0 0% 3.9%);
+  --primary: hsl(0 0% 9%);
+  --primary-foreground: hsl(0 0% 98%);
+  --secondary: hsl(0 0% 96.1%);
+  --secondary-foreground: hsl(0 0% 9%);
+  --muted: hsl(0 0% 96.1%);
+  --muted-foreground: hsl(0 0% 45.1%);
+  --accent: hsl(0 0% 96.1%);
+  --accent-foreground: hsl(0 0% 9%);
+  --destructive: hsl(0 84.2% 60.2%);
   --destructive-foreground: hsl(0 0% 98%);
-  --border:              hsl(210 20% 85%);
-  --input:               hsl(210 20% 85%);
-  --ring:                hsl(228 70% 40%);
+  /*--border: hsl(0 0% 89.8%);*/
+  --border: hsl(31, 9%, 55%);
+  /*--input: hsl(0 0% 89.8%);*/
+  --input: hsl(31, 9%, 55%);
+  --ring: hsl(0 0% 3.9%);
+  --chart-1: hsl(12 76% 61%);
+  --chart-2: hsl(173 58% 39%);
+  --chart-3: hsl(197 37% 24%);
+  --chart-4: hsl(43 74% 66%);
+  --chart-5: hsl(27 87% 67%);
 }
 
 @theme inline {
-  --color-background:          var(--background);
-  --color-foreground:          var(--foreground);
-  --color-card:                var(--card);
-  --color-card-foreground:     var(--card-foreground);
-  --color-popover:             var(--popover);
-  --color-popover-foreground:  var(--popover-foreground);
-  --color-primary:             var(--primary);
-  --color-primary-foreground:  var(--primary-foreground);
-  --color-secondary:           var(--secondary);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted:               var(--muted);
-  --color-muted-foreground:    var(--muted-foreground);
-  --color-accent:              var(--accent);
-  --color-accent-foreground:   var(--accent-foreground);
-  --color-destructive:         var(--destructive);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --color-border:              var(--border);
-  --color-input:               var(--input);
-  --color-ring:                var(--ring);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
-  --default-font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji";
-  --mono-font-family: "Space Mono", ui-monospace, monospace;
+
+  --default-font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 @theme {
@@ -101,28 +101,31 @@
   --breakpoint-3xl: 100rem;
   --text-xxs: 0.625rem;
 
-  /* Pulse animation for neon glow effects */
-  --animate-neon-pulse: neon-pulse 2.4s ease-in-out infinite;
-  --animate-ellipsis:   ellipsis steps(1, end) 1s infinite;
-
-  @keyframes neon-pulse {
-    0%, 100% { opacity: 1; filter: brightness(1); }
-    50%       { opacity: 0.75; filter: brightness(1.3); }
-  }
+  --animate-ellipsis: ellipsis steps(1, end) 1s infinite;
 
   @keyframes ellipsis {
-    0%   { content: ''; }
-    25%  { content: '.'; }
-    50%  { content: '..'; }
-    75%  { content: '...'; }
-    100% { content: ''; }
+    0% {
+      content: '';
+    }
+    25% {
+      content: '.';
+    }
+    50% {
+      content: '..';
+    }
+    75% {
+      content: '...';
+    }
+    100% {
+      content: '';
+    }
   }
 }
 
-/* ── Base Layer ────────────────────────────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border;
+
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
@@ -130,7 +133,7 @@
 
   html, body {
     @apply h-full;
-    color-scheme: dark;
+    color-scheme: light dark;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -139,20 +142,22 @@
   }
 
   html {
-    @apply touch-pan-x touch-pan-y min-h-full;
+    @apply touch-pan-x touch-pan-y min-h-full; /* prevent pinch-zoom at page bottom */
   }
 
   body {
     @apply bg-background text-foreground overflow-hidden overscroll-y-none overscroll-x-none;
   }
 
+  /* IMPORTANT TAKE NOTE! font scaling */
+  /* biome-ignore lint/correctness/noUnknownFunction: exists */
   @media (min-width: theme(--breakpoint-lg)) {
-    html {
-      font-size: clamp(0.8rem, 0.5vw + 0.4rem, 1rem);
-    }
+      html {
+          font-size: clamp(.8rem, .5vw + .4rem, 1rem);
+      }
   }
 
-  /* Tweakpane dev panel */
+  /* tweakpane */
   .tp-dfwv {
     @apply !top-auto !right-auto left-4 bottom-4 z-50 !w-sm;
   }

@@ -1,6 +1,7 @@
-import { Github, Zap, Grid2x2, DollarSign, Layers, Cpu } from 'lucide-react'
+
+
+import { store, useShallowState } from '@/store'
 import type { PropsWithChildren } from 'react'
-import { useShallowState } from '@/store'
 import config from '../../../config'
 import { cn } from '../../../utils/tw'
 import { Hotkeys } from '../../common/hotkeys'
@@ -14,140 +15,89 @@ import {
 import { Button } from '../../ui/button'
 import { ScrollArea } from '../../ui/scroll-area'
 
-// ── Internal primitives ───────────────────────────────────────────────────────
-
-const ExternalLink = ({ children, href }: PropsWithChildren<{ href: string }>) => (
+const Link = ({ children, href }: PropsWithChildren<{ href: string }>) => (
   <a
     href={href}
     target='_blank'
-    rel='noreferrer noopener'
-    className='font-semibold underline underline-offset-2 text-[hsl(196_100%_55%)] hover:text-white transition-colors duration-150'
+    rel='noreferrer noopener noreferer'
+    className='font-bold underline underline-offset-2'
   >
     {children}
   </a>
 )
 
-const Highlight = ({ children }: PropsWithChildren) => (
-  <span className='font-bold text-[hsl(196_100%_55%)]'>{children}</span>
-)
+const ToggleVoroforceDevMode = () => {
+  const { voroforceDevSceneEnabled, setVoroforceDevSceneEnabled } = store()
 
+  return (
+    <Button
+      onClick={() => setVoroforceDevSceneEnabled(!voroforceDevSceneEnabled)}
+      size='sm'
+      className='mx-1 cursor-pointer'
+    >
+      Toggle
+    </Button>
+  )
+}
 
-// ── Accordion section definitions ────────────────────────────────────────────
-
-const sections = [
+const items = [
   {
-    icon: <Zap className='w-4 h-4 text-[hsl(196_100%_55%)]' />,
-    title: 'What is NoAds?',
+    title: 'Copyright Disclaimer',
     content: (
       <>
         <p>
-          <Highlight>NoAds</Highlight> is the world's first permanent mosaic ad board.
-          The entire website is a single, living billboard — made up of thousands of
-          individual tiles that anyone can buy and own <Highlight>forever</Highlight>.
+          <b>This is a non-commercial project</b>. The content is intended
+          solely for educational and informational purposes. All rights to the
+          materials used remain with their respective owners. I do not claim
+          ownership of any third-party content. If you are the rightful owner of
+          any material featured here and have concerns about its use, please{' '}
+          <Link href={`mailto:${config.contactEmail}`}>contact</Link> me - I
+          will address the issue promptly.
         </p>
         <br />
         <p>
-          Every tile you buy is a permanent piece of the NoAds grid. Upload your brand
-          image, add a link, and your ad stays live for as long as NoAds exists — no
-          subscriptions, no renewals, no expiry.
+          The dataset is made available under the{' '}
+          <Link href='http://opendatacommons.org/licenses/by/1.0/'>
+            Open Data Commons Attribution License
+          </Link>{' '}
+          and is sourced from{' '}
+          <Link href='https://www.kaggle.com/datasets/asaniczka/tmdb-Ads-dataset-2023-930k-Ads/data'>
+            Kaggle's TMDB Ads Dataset
+          </Link>
+        </p>
+        <br />
+        <p>
+          Much of the shader code is heavily inspired by - and in some cases
+          directly copied from - the work of talented creators on{' '}
+          <Link href='https://shadertoy.com'>Shadertoy</Link>. Many of the
+          underlying algorithms they use are themselves adapted from other
+          sources.
         </p>
       </>
     ),
   },
   {
-    icon: <Grid2x2 className='w-4 h-4 text-[hsl(196_100%_55%)]' />,
-    title: 'How to Buy a Tile',
+    title: 'About',
     content: (
       <>
         <p>
-          Click on any <Highlight>available tile</Highlight> in the grid. A purchase
-          panel will open where you can review the tile price based on its position.
-        </p>
-        <br />
-        <p>Fill in your:</p>
-        <ul className='list-disc list-inside mt-2 space-y-1 text-sm'>
-          <li><Highlight>Business Name</Highlight> (required)</li>
-          <li><Highlight>Email</Highlight> (required)</li>
-          <li>Website / Business Link (optional)</li>
-          <li>Ad Image — PNG or JPG (optional but recommended)</li>
-          <li>10-second Video Ad — adds ₹{config.videoAddonPrice} to the price</li>
-        </ul>
-        <br />
-        <p>Confirm your purchase and your tile goes live immediately on the grid.</p>
-      </>
-    ),
-  },
-  {
-    icon: <DollarSign className='w-4 h-4 text-[hsl(196_100%_55%)]' />,
-    title: 'Pricing',
-    content: (
-      <>
-        <p>
-          Tile prices start at <Highlight>₹{config.tileBasePrice}</Highlight> and
-          increase based on position. Tiles closer to the <Highlight>centre</Highlight>{' '}
-          of the grid command higher prices due to greater visibility.
+          The silver screen's heyday is arguably behind us. Luckily, we have
+          over a hundred years of cinema to fall back on.
         </p>
         <br />
         <p>
-          Adding a <Highlight>10-second video ad</Highlight> to any tile costs an
-          additional <Highlight>₹{config.videoAddonPrice}</Highlight>.
+          This gallery features a collection of the 50,000 most <i>popular*</i>{' '}
+          Ads according to <Link href={config.tmdbUrl}>TMDB</Link>, with data
+          current as of early 2025. The Ads are sorted by popularity in
+          descending order, starting from the center of the grid and moving
+          outward.
         </p>
         <br />
         <p>
-          All purchases are <Highlight>one-time and permanent</Highlight>. No monthly
-          fees. No renewals.
+          <small>
+            <i>*Not to be confused with the highest rated Ads</i>
+          </small>
         </p>
-      </>
-    ),
-  },
-  {
-    icon: <Layers className='w-4 h-4 text-[hsl(196_100%_55%)]' />,
-    title: 'The Mosaic Effect',
-    content: (
-      <>
-        <p>
-          Every unsold tile on the board contributes to a massive, translucent{' '}
-          <Highlight>contract mosaic</Highlight> — a ghost image that spans the entire
-          grid and creates a visual illusion when viewed from a distance.
-        </p>
-        <br />
-        <p>
-          As advertisers buy and fill in tiles, each sold tile{' '}
-          <Highlight>punches through</Highlight> the mosaic with their own ad,
-          replacing that piece of the puzzle permanently.
-        </p>
-        <br />
-        <p>
-          The result is a living, ever-evolving billboard where the community of
-          advertisers collectively builds the final picture.
-        </p>
-      </>
-    ),
-  },
-  {
-    icon: <Cpu className='w-4 h-4 text-[hsl(196_100%_55%)]' />,
-    title: 'Technology',
-    content: (
-      <>
-        <p>
-          The NoAds grid is rendered using a{' '}
-          <ExternalLink href='https://en.wikipedia.org/wiki/Voronoi_diagram'>
-            Voronoi diagram
-          </ExternalLink>{' '}
-          — a mathematical structure that divides space into organic, interlocking
-          regions. The simulation runs in JavaScript web workers, while the
-          visualisation layer uses <Highlight>WebGL2</Highlight>.
-        </p>
-        <br />
-        <Button variant='default' asChild>
-          <a
-            href={config.githubUrl}
-            target='_blank'
-            rel='noreferrer noopener'
-          >
-            <Github className='w-4 h-4 mr-2' /> View on GitHub
-          </a>
-        </Button>
       </>
     ),
   },
@@ -156,9 +106,125 @@ const sections = [
     content: <Hotkeys />,
     className: 'hidden mouse:block',
   },
-]
+  {
+    title: 'Technical TL;DR',
+    content: (
+      <>
+        <p>
+          This is an experimental gallery designed to visualize tens of
+          thousands of images as a Voronoi diagram. The Voronoi seeds are
+          generated using a custom grid-constrained force graph layout. The
+          simulation layer runs in JavaScript with multithreading support, while
+          the visualization layer uses WebGL2.
+        </p>
+        <br />
 
-// ── About modal ───────────────────────────────────────────────────────────────
+      </>
+    ),
+  },
+  {
+    title: 'Voronoi',
+    content: (
+      <>
+        <p>
+          <Link href='https://en.wikipedia.org/wiki/Voronoi_diagram'>
+            Voronoi diagrams
+          </Link>{' '}
+          are fascinating. Once you're aware of them, you'll start noticing them
+          everywhere - from{' '}
+          <Link href='https://www.google.com/search?q=examples+of+voronoi+patterns+in+nature'>
+            nature
+          </Link>{' '}
+          to art and architecture. While they’re aesthetically pleasing, they
+          haven’t traditionally had a strong use case in user interfaces. This
+          is an attempt to give them one - though admittedly, a similar effect
+          could be achieved by simply distorting a grid.
+        </p>
+        <br />
+        <p>
+          It’s worth noting that this is not a typical Voronoi diagram. The
+          seeds are loosely constrained to a grid, which makes the resulting
+          cells fairly uniform. The distance metric is biased 1.5x along the
+          y-axis. Depending on the view mode, there are also cell weights and
+          various distortion effects.
+        </p>
+        <br />
+        <p className='hidden md:inline-block'>
+          You can <ToggleVoroforceDevMode /> to see the Voronoi cell seeds but
+          depending on the level of distortion these may not be representative
+          of the actual Voronoi diagram.
+        </p>
+      </>
+    ),
+  },
+  {
+    title: 'Force-directed graph layout',
+    content: (
+      <>
+        <p>
+          The force simulation runs on the CPU in a JavaScript web worker. It's
+          heavily inspired by{' '}
+          <Link href='https://github.com/d3/d3-force'>D3-force</Link> and its
+          use of velocity Verlet integration.
+        </p>
+        <br />
+        <p>
+          The simulation could potentially be implemented on the GPU with WebGL
+          - though WebGPU would be a better fit once it gains broader adoption.
+        </p>
+        <br />
+        <p>
+          Alternatively, potential performance gains could be achieved by
+          simulating only a subset of the cells and interpolating the rest.{' '}
+        </p>
+      </>
+    ),
+  },
+  {
+    title: 'Shaders',
+    content: (
+      <>
+        <p>
+          Many of the shader algorithms draw heavy inspiration from - if not
+          directly reinterpret - the work of several brilliant creators on{' '}
+          <Link href='https://shadertoy.com'>Shadertoy</Link>.
+        </p>
+        <br />
+        <p>
+          The{' '}
+          <Link href='https://en.wikipedia.org/wiki/Jump_flooding_algorithm'>
+            Jump Flooding algorithm
+          </Link>
+          is not employed. Instead, the Voronoi diagram is generated in a single
+          pass through a two-pronged approach: comparing distances with
+          immediate grid neighbors and with additional neighbors located within
+          a small pixel-radius search area. Although cell propagation is
+          relatively slow, this can be reasonably masked using simulation speed
+          limits and other visual tricks.
+        </p>
+      </>
+    ),
+  },
+  {
+    title: 'Visualizing large image datasets',
+    content: (
+      <>
+        <p>
+          The Ad posters are packed into image montages, also known as texture
+          atlases. These montages are served on demand as compressed textures,
+          with multiple quality levels available. The lowest quality level
+          delivers images as small as 4×6 pixels.
+        </p>
+        <br />
+        <p className='pb-6'>
+          If you're just interested in visualizing large amounts of images but
+          find this project a bit silly, check out the (unrelated) project{' '}
+          <Link href='https://github.com/pleonard212/pix-plot'>pix-plot</Link>.
+        </p>
+      </>
+    ),
+  },
+]
 
 export const About = () => {
   const { open, setOpen } = useShallowState((state) => ({
@@ -168,7 +234,10 @@ export const About = () => {
 
   return (
     <Modal
-      rootProps={{ open, onClose: () => setOpen(false) }}
+      rootProps={{
+        open: open,
+        onClose: () => setOpen(false),
+      }}
       overlay
       header={
         <div className='flex h-18 w-full bg-gradient-to-t from-0% from-transparent via-60% via-background to-100% to-background max-md:hidden' />
@@ -185,43 +254,21 @@ export const About = () => {
         className='not-landscape:w-full not-landscape:rounded-t-3xl bg-background/60 lg:w-full lg:rounded-3xl landscape:h-full landscape:rounded-l-3xl'
         innerClassName='max-h-[calc(100vh-var(--spacing)*6*2)]'
       >
-        {/* Header brand mark */}
-        <div className='flex items-center gap-3 px-6 pt-8 pb-4 lg:pt-12'>
-          <div
-            className='flex items-center justify-center w-10 h-10 rounded-xl'
-            style={{
-              background: 'linear-gradient(135deg, hsl(255 60% 22%), hsl(196 100% 40%))',
-              boxShadow: '0 0 18px rgba(0, 210, 255, 0.4)',
-            }}
-          >
-            <Zap className='w-5 h-5 text-white' fill='white' />
-          </div>
-          <div>
-            <h1 className='text-xl font-bold tracking-tight'>
-              No<span style={{ color: 'hsl(196, 100%, 55%)' }}>Ads</span>
-            </h1>
-            <p className='text-xs text-muted-foreground'>{config.tagline}</p>
-          </div>
-        </div>
-
         <Accordion
           type='multiple'
-          className='w-full px-6 pb-18 md:pr-10 lg:pb-24'
-          defaultValue={['0', '1', '2']}
+          className='w-full p-6 pb-18 md:pr-10 lg:pt-12 lg:pb-24'
+          defaultValue={['1', '2', '3']}
         >
-          {sections.map(({ icon, title, content, className }, index) => (
+          {items.map(({ title, content, className }, index) => (
             <AccordionItem
               key={title}
               value={`${index}`}
               className={cn('w-full cursor-auto', className)}
             >
-              <AccordionTrigger className='w-full cursor-pointer font-bold text-base uppercase leading-none underline-offset-3 [&>svg]:size-5'>
-                <span className='flex items-center gap-2'>
-                  {icon}
-                  {title}
-                </span>
+              <AccordionTrigger className='w-full cursor-pointer font-bold text-lg uppercase leading-none underline-offset-3 [&>svg]:size-6'>
+                {title}
               </AccordionTrigger>
-              <AccordionContent className='text-sm text-muted-foreground leading-relaxed'>
+              <AccordionContent className='text-base'>
                 {content}
               </AccordionContent>
             </AccordionItem>

@@ -9,13 +9,27 @@ import { type PortfolioSlice, createPortfolioSlice } from './portfolio-slice'
 
 export type StoreState = UiSlice & VoroforceSlice & AdDataSlice & PortfolioSlice
 
-export const store = create(
-  subscribeWithSelector<StoreState>((...a) => ({
-    ...createUiSlice(...a),
-    ...createEngineSlice(...a),
-    ...createAdDataSlice(...a),
-    ...createPortfolioSlice(...a),
-  })),
+import { persist, createJSONStorage } from 'zustand/middleware'
+
+export const store = create<StoreState>()(
+  subscribeWithSelector(
+    persist(
+      (...a) => ({
+        ...createUiSlice(...a),
+        ...createEngineSlice(...a),
+        ...createAdDataSlice(...a),
+        ...createPortfolioSlice(...a),
+      }),
+      {
+        name: 'noads-portfolio-storage',
+        storage: createJSONStorage(() => localStorage),
+        partialize: (state) => ({
+          balance: state.balance,
+          ownedCells: state.ownedCells,
+        }) as StoreState, // cast needed depending on zustand version
+      }
+    )
+  )
 )
 
 export const useShallowState = <U>(selector: (state: StoreState) => U) =>

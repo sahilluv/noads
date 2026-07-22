@@ -1,9 +1,11 @@
 import type { StateCreator } from 'zustand'
 import type { Ad, AdBatch, AdData } from '../vf'
+import type { VoroforceCell } from '../vf/types'
 
 export interface AdDataSlice {
   ad?: Ad
-  setAd: (ad?: Ad) => void
+  hoveredCell?: VoroforceCell
+  setAd: (ad?: Ad, cell?: VoroforceCell) => void
   adBatches: Map<number, AdData[]>
 }
 
@@ -13,6 +15,6 @@ export const createAdDataSlice: StateCreator<
   [],
   AdDataSlice
 > = (set) => ({
-  setAd: (ad?: Ad) => set({ ad }),
+  setAd: (ad?: Ad, cell?: VoroforceCell) => set({ ad, hoveredCell: cell }),
   adBatches: new Map<number, AdBatch>(),
 })
