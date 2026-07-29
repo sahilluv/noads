@@ -170,8 +170,14 @@ export function generateCenterOutwardSubgridsAndAssignCellIds(
   let stepsTaken = 0
   let directionChanges = 0
 
+  const MAX_SPIRAL_VISITED = 1000000
+
   // Continue until we've used all elements
-  while (remainingElements > 0 && result.length < elementCount) {
+  while (
+    remainingElements > 0 &&
+    result.length < elementCount &&
+    visited.size < MAX_SPIRAL_VISITED
+  ) {
     // Move in current direction
     const [rowDelta, colDelta] = dirMovements[direction]
     currentGridRow += rowDelta
@@ -194,6 +200,25 @@ export function generateCenterOutwardSubgridsAndAssignCellIds(
       // Every two direction changes, increase the steps
       if (directionChanges % 2 === 0) {
         stepsInCurrentDirection++
+      }
+    }
+  }
+
+  if (result.length < elementCount) {
+    // Fallback assignment when spiral generation fails due to unexpected grid layout.
+    for (let i = 0; i < cells.length; i++) {
+      const cell = cells[i]
+      if (!cell) continue
+      if (!cell.id) {
+        cell.id = i
+        cell.subgrid = Math.floor(i / SUBGRID_SIZE)
+        cell.subgridIndex = i % SUBGRID_SIZE
+
+        if (cell.subgrid < autoTargetMediaVersion2SubgridCount) {
+          cell.targetMediaVersion = 2
+        } else if (cell.subgrid < autoTargetMediaVersion1SubgridCount) {
+          cell.targetMediaVersion = 1
+        }
       }
     }
   }
