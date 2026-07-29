@@ -4,6 +4,15 @@ export type AdData = Record<string, string | number>
 export type AdBatch = AdData[]
 export type AdBatches = Map<number, AdBatch>
 
+const AD_DUMMY_POSTERS = [
+  'ad_dummy_01.jpg',
+  'ad_dummy_02.jpg',
+  'ad_dummy_03.jpg',
+  'ad_dummy_04.jpg',
+  'ad_dummy_05.jpg',
+  'ad_dummy_06.jpg',
+]
+
 export class Ad {
   tmdbId: number
   imdbId?: string
@@ -27,7 +36,12 @@ export class Ad {
     this.year = Number(data.release_year)
     this.rating = Number(data.vote_average) * 10
     this.popularity = Number(data.popularity)
-    this.poster = String(data.poster_path)
+    const posterIndex = Number(data.id)
+    this.poster = AD_DUMMY_POSTERS[
+      Number.isFinite(posterIndex)
+        ? posterIndex % AD_DUMMY_POSTERS.length
+        : 0
+    ]
     this.backdrop = String(data.backdrop_path)
   }
 }
