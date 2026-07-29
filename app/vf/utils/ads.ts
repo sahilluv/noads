@@ -4,6 +4,8 @@ export type AdData = Record<string, string | number>
 export type AdBatch = AdData[]
 export type AdBatches = Map<number, AdBatch>
 
+const AD_INFO_BASE_URL = import.meta.env.VITE_Ad_INFO_BASE_URL ?? '/json'
+
 const AD_DUMMY_POSTERS = [
   'ad_dummy_01.jpg',
   'ad_dummy_02.jpg',
@@ -47,7 +49,7 @@ export class Ad {
 }
 
 const loadCellAdBatch = async (batchIndex: number) => {
-  const url = `${import.meta.env.VITE_Ad_INFO_BASE_URL}/${batchIndex}.json`
+  const url = `${AD_INFO_BASE_URL}/${batchIndex}.json`
   try {
     const response = await fetch(url)
     if (!response.ok) {
