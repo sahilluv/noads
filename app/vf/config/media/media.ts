@@ -1,5 +1,14 @@
+const DUMMY_MEDIA_TILES = [
+  'ad_dummy_01.jpg',
+  'ad_dummy_02.jpg',
+  'ad_dummy_03.jpg',
+  'ad_dummy_04.jpg',
+  'ad_dummy_05.jpg',
+  'ad_dummy_06.jpg',
+]
+
 const mediaConfig = {
-  enabled: false,
+  enabled: true,
   baseUrl: import.meta.env.VITE_TEXTURES_BASE_URL ?? '/media',
   preload: 'first', // 'v0', 'first' or false
   compressionFormat: 'dds', // or 'ktx'
@@ -51,7 +60,10 @@ export const uncompressedSingleMediaVersionConfig = {
   layers: 50000, // real layer count for 50000/54: 925.9 = 926
   virtualLayers: 50,
   layerIndexStart: 0,
-  layerSrcFormat: '/single/{INDEX}.jpg',
+  layerSrcFormat: (layerIndex: number) => {
+    const tileName = DUMMY_MEDIA_TILES[layerIndex % DUMMY_MEDIA_TILES.length]
+    return `/dummy-ads/${tileName}`
+  },
   type: 'uncompressed-single',
 }
 
@@ -59,8 +71,6 @@ export const mediaConfigWithUncompressedSingleVersion = {
   ...mediaConfig,
   versions: [
     ...mediaConfig.versions,
-    ...(import.meta.env.VITE_EXPERIMENTAL_MEDIA_VERSION_3_ENABLED
-      ? [uncompressedSingleMediaVersionConfig]
-      : []),
+    uncompressedSingleMediaVersionConfig,
   ],
 }
