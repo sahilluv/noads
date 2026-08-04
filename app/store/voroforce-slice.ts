@@ -94,6 +94,7 @@ export const createEngineSlice: StateCreator<
     },
     playedIntro: persistentSettings.playedIntro,
     setPlayedIntro: (playedIntro: boolean) => {
+      console.debug('[store] setPlayedIntro called:', playedIntro)
       updatePersistentSetting('playedIntro', playedIntro)
       set({ playedIntro })
     },

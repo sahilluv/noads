@@ -105,6 +105,10 @@ function useIntroVisible() {
           : DEFAULT_REVEAL_SCREEN_DELAY,
     }))
 
+    // debug: log visibility inputs
+    // eslint-disable-next-line no-console
+    console.debug('[intro] useIntroVisible values', { introRequired, voroforceMediaPreloaded, revealScreenDelay })
+
   if (OBSCURE_VISUAL_DEFECTS) {
     const [, forceUpdate] = useReducer((x) => x + 1, 0)
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
