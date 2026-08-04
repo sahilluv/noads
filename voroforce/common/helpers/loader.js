@@ -17,15 +17,6 @@ export class Loader extends CustomEventTarget {
 
     this.loadedIndex = 0
     this.loadingMediaLayers = 0
-    try {
-      if (typeof window !== 'undefined') {
-        // expose loader for debugging
-        // eslint-disable-next-line no-undef
-        window.__voroforce_loader = this
-      }
-    } catch (e) {
-      // ignore in non-browser contexts
-    }
   }
 
   preloadAllMediaLayersVersion0(onLoad) {

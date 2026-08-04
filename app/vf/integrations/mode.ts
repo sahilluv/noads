@@ -8,6 +8,7 @@ import { updateControlsByMode } from './controls'
 
 export const revealVoroforceContainer = () => {
   // store.getState().container.classList.remove('opacity-0')
+  console.debug('[mode] revealVoroforceContainer: setting voroforceMediaPreloaded=true')
   store.setState({
     voroforceMediaPreloaded: true,
   })
@@ -77,6 +78,7 @@ const handleIntro = () => {
   const { controls, dimensions } = voroforce
 
   setTimeout(() => {
+    console.debug('[mode] handleIntro: starting intro sequence')
     if (!voroforce) return
 
     voroforce.config.lattice = {
@@ -87,9 +89,11 @@ const handleIntro = () => {
     voroforce.resize()
 
     revealVoroforceContainer()
+    console.debug('[mode] handleIntro: calling setPlayedIntro(true)')
     setPlayedIntro(true)
 
     setTimeout(() => {
+      console.debug('[mode] handleIntro: switching to preview mode')
       handleModeChange(VOROFORCE_MODE.preview)
 
       controls.targetPointer = {
