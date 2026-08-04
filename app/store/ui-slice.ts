@@ -21,6 +21,12 @@ export interface UiSlice {
   addCustomLinkTypeOpen: boolean | DialogProps['direction']
   setAddCustomLinkTypeOpen: (open: boolean | DialogProps['direction']) => void
   toggleAddCustomLinkTypeOpen: () => void
+  paymentModalOpen: boolean
+  paymentModalCellIndex: number | null
+  setPaymentModalOpen: (open: boolean) => void
+  setPaymentModalCellIndex: (index: number | null) => void
+  openPaymentModal: (cellIndex: number) => void
+  closePaymentModal: () => void
 }
 
 export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (
@@ -66,6 +72,20 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (
       set({
         addCustomLinkTypeOpen: !get().addCustomLinkTypeOpen,
       })
+    },
+    paymentModalOpen: false,
+    paymentModalCellIndex: null,
+    setPaymentModalOpen: (open: boolean) => {
+      set({ paymentModalOpen: open })
+    },
+    setPaymentModalCellIndex: (index: number | null) => {
+      set({ paymentModalCellIndex: index })
+    },
+    openPaymentModal: (cellIndex: number) => {
+      set({ paymentModalOpen: true, paymentModalCellIndex: cellIndex })
+    },
+    closePaymentModal: () => {
+      set({ paymentModalOpen: false, paymentModalCellIndex: null })
     },
   }
 }
