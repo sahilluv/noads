@@ -45,13 +45,24 @@ export class VirtualMediaGridArrayTexture extends Texture {
     //   this.gl.UNSIGNED_BYTE, // type
     //   null, // data
     // )
+    const texWidth = Math.max(1, this.width)
+    const texHeight = Math.max(1, this.height)
+    const texLength = Math.max(1, this.length)
+
+    if (texWidth !== this.width || texHeight !== this.height || texLength !== this.length) {
+      console.warn(
+        'VirtualMediaGridArrayTexture: invalid dimensions, using fallback',
+        { width: this.width, height: this.height, length: this.length },
+      )
+    }
+
     gl.texStorage3D(
       gl.TEXTURE_2D_ARRAY,
       1, // mipmap levels
       this.gl.RGBA8,
-      this.width,
-      this.height,
-      this.length, // (number of layers)
+      texWidth,
+      texHeight,
+      texLength, // (number of layers)
     )
   }
 

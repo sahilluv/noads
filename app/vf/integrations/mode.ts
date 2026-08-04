@@ -122,10 +122,30 @@ export const handleMode = () => {
     }
   } else {
     if (config.media.enabled && config.media.preload) {
-      loader.listenOnce('preloaded', () => {
-        // media will be uploaded to gpu on the next tick
-        ticker.listenOnce('tick', revealVoroforceContainer)
-      })
+      if (loader.loadingMediaLayers !== 0) {
+        let hasRevealed = false
+        const revealNow = () => {
+          if (hasRevealed) return
+          hasRevealed = true
+          clearTimeout(revealTimeout)
+          ticker.listenOnce('tick', revealVoroforceContainer)
+        }
+
+        const revealTimeout = setTimeout(() => {
+          if (!hasRevealed) {
+            console.warn(
+              'Voroforce media preload timeout: revealing container anyway',
+            )
+            revealNow()
+          }
+        }, 5000)
+
+        loader.listenOnce('preloaded', () => {
+          revealNow()
+        })
+      } else {
+        revealVoroforceContainer()
+      }
     } else {
       revealVoroforceContainer()
     }

@@ -35,9 +35,7 @@ export class Loader extends CustomEventTarget {
   }
 
   preloadFirstMediaLayerAllGridVersions(onLoad) {
-    const count = this.config.versions.filter(
-      ({ type }) => !type || type === 'compressed-grid',
-    ).length
+    const count = this.config.versions.length
     let loaded = 0
     const onLoadLayer = () => {
       loaded++
@@ -47,8 +45,6 @@ export class Loader extends CustomEventTarget {
       }
     }
     for (let i = 0; i < count; i++) {
-      const type = this.config.versions[i].type
-      if (type && type !== 'compressed-grid') continue
       void this.loadMediaLayer(i, 0, onLoadLayer)
     }
   }
@@ -83,125 +79,124 @@ export class Loader extends CustomEventTarget {
 
     let bytes
     const type = config.type ?? 'compressed-grid'
-
     const isDds = ext === 'dds'
     const isKtx = ext === 'ktx'
 
-    if (isDds) {
-      // DDS File format constants
-      const MAGIC = 0x20534444
-      const DDPF_FOURCC = 0x4
+    try {
+      if (isDds) {
+        // DDS File format constants
+        const MAGIC = 0x20534444
+        const DDPF_FOURCC = 0x4
 
-      // DXT compression formats
-      const FOURCC_DXT1 = 0x31545844
+        // DXT compression formats
+        const FOURCC_DXT1 = 0x31545844
 
-      const response = await fetch(src)
-      const arrayBuffer = await response.arrayBuffer()
-      const header = new Int32Array(arrayBuffer, 0, 31)
+        const response = await fetch(src)
+        const arrayBuffer = await response.arrayBuffer()
+        const header = new Int32Array(arrayBuffer, 0, 31)
 
-      // Verify magic number
-      if (header[0] !== MAGIC) {
-        console.log('src', src)
-        throw new Error('Invalid DDS file format')
+        // Verify magic number
+        if (header[0] !== MAGIC) {
+          console.log('src', src)
+          throw new Error('Invalid DDS file format')
+        }
+
+        const height = header[3]
+        const width = header[4]
+        const pixelFormat = header[20]
+
+        // Check compression type
+        if (!(pixelFormat & DDPF_FOURCC)) {
+          throw new Error('Unsupported DDS format: not compressed')
+        }
+
+        const fourCC = header[21]
+        const blockSize = 8
+
+        if (fourCC !== FOURCC_DXT1) {
+          throw new Error('Unsupported DDS format: not DXT1')
+        }
+
+        // Calculate size and load texture data
+        const size =
+          (((Math.max(4, width) / 4) * Math.max(4, height)) / 4) * blockSize
+
+        bytes = new Uint8Array(arrayBuffer, 128, size) // 128 is size of DDS header
+      } else if (isKtx) {
+        const response = await fetch(src)
+        const arrayBuffer = await response.arrayBuffer()
+
+        const idCheck = [
+          0xab, 0x4b, 0x54, 0x58, 0x20, 0x31, 0x31, 0xbb, 0x0d, 0x0a, 0x1a, 0x0a,
+        ]
+        const id = new Uint8Array(arrayBuffer, 0, 12)
+        for (let i = 0; i < id.length; i++)
+          if (id[i] !== idCheck[i])
+            return console.error('File missing KTX identifier')
+
+        const size = Uint32Array.BYTES_PER_ELEMENT
+        const head = new DataView(arrayBuffer, 12, 13 * size)
+        const littleEndian = head.getUint32(0, true) === 0x04030201
+        const glType = head.getUint32(size, littleEndian)
+        if (glType !== 0) {
+          throw new Error('only compressed formats currently supported')
+        }
+        const bytesOfKeyValueData = head.getUint32(12 * size, littleEndian)
+
+        let offset = 12 + 13 * 4 + bytesOfKeyValueData
+        const levelSize = new Int32Array(arrayBuffer, offset, 1)[0]
+        offset += 4 // levelSize field
+        bytes = new Uint8Array(arrayBuffer, offset, levelSize)
+      } else {
+        const blob = await (
+          await fetch(src, {
+            // mode: 'no-cors',
+          })
+        ).blob()
+
+        async function loadImage(src) {
+          return new Promise((resolve, reject) => {
+            const img = new Image()
+            img.onload = () => {
+              URL.revokeObjectURL(img.src)
+              resolve(img)
+            }
+            img.onerror = () => {
+              reject(new Error('Failed to load image'))
+            }
+            img.crossOrigin = 'anonymous'
+            img.src = src
+          })
+        }
+        bytes = await loadImage(URL.createObjectURL(blob))
       }
 
-      const height = header[3]
-      // const width = header[2]
-      const width = header[4]
-      const pixelFormat = header[20]
+      this.loadedIndex++
+      this.dispatchEvent(
+        new LoaderEvent('mediaLayerLoaded', {
+          bytes,
+          versionIndex,
+          layerIndex,
+          type,
+          isCompressed: isDds,
+        }),
+      )
 
-      // Check compression type
-      if (!(pixelFormat & DDPF_FOURCC)) {
-        throw new Error('Unsupported DDS format: not compressed')
-      }
-
-      const fourCC = header[21]
-      const blockSize = 8
-
-      if (fourCC !== FOURCC_DXT1) {
-        throw new Error('Unsupported DDS format: not DXT1')
-      }
-
-      // Calculate size and load texture data
-      const size =
-        (((Math.max(4, width) / 4) * Math.max(4, height)) / 4) * blockSize
-
-      bytes = new Uint8Array(arrayBuffer, 128, size) // 128 is size of DDS header
-    } else if (isKtx) {
-      const response = await fetch(src)
-      const arrayBuffer = await response.arrayBuffer()
-
-      const idCheck = [
-        0xab, 0x4b, 0x54, 0x58, 0x20, 0x31, 0x31, 0xbb, 0x0d, 0x0a, 0x1a, 0x0a,
-      ]
-      const id = new Uint8Array(arrayBuffer, 0, 12)
-      for (let i = 0; i < id.length; i++)
-        if (id[i] !== idCheck[i])
-          return console.error('File missing KTX identifier')
-
-      const size = Uint32Array.BYTES_PER_ELEMENT
-      const head = new DataView(arrayBuffer, 12, 13 * size)
-      const littleEndian = head.getUint32(0, true) === 0x04030201
-      const glType = head.getUint32(size, littleEndian)
-      if (glType !== 0) {
-        throw new Error('only compressed formats currently supported')
-      }
-      // this.glInternalFormat = head.getUint32(4 * size, littleEndian)
-      // const width = head.getUint32(6 * size, littleEndian)
-      // const height = head.getUint32(7 * size, littleEndian)
-      // this.numberOfFaces = head.getUint32(10 * size, littleEndian)
-      // this.numberOfMipmapLevels = Math.max(
-      //   1,
-      //   head.getUint32(11 * size, littleEndian),
-      // )
-      const bytesOfKeyValueData = head.getUint32(12 * size, littleEndian)
-
-      let offset = 12 + 13 * 4 + bytesOfKeyValueData
-      const levelSize = new Int32Array(arrayBuffer, offset, 1)[0]
-      offset += 4 // levelSize field
-      bytes = new Uint8Array(arrayBuffer, offset, levelSize)
-    } else {
-      const blob = await (
-        await fetch(src, {
-          // mode: 'no-cors',
-        })
-      ).blob()
-
-      async function loadImage(src) {
-        return new Promise((resolve, reject) => {
-          const img = new Image()
-          img.onload = () => {
-            URL.revokeObjectURL(img.src)
-            resolve(img)
-          }
-          img.onerror = () => {
-            reject(new Error('Failed to load image'))
-          }
-          // img.crossOrigin = 'use-credentials'
-          img.src = src
-        })
-      }
-      bytes = await loadImage(URL.createObjectURL(blob))
-    }
-
-    this.loadedIndex++
-    this.dispatchEvent(
-      new LoaderEvent('mediaLayerLoaded', {
-        bytes,
+      this.sharedLoadedMediaVersionLayersData[versionIndex].data[layerIndex] = 2
+      onLoad?.()
+    } catch (error) {
+      console.warn('Failed to load media layer', {
         versionIndex,
         layerIndex,
-        type,
-        isCompressed: isDds,
-      }),
-    )
-
-    this.sharedLoadedMediaVersionLayersData[versionIndex].data[layerIndex] = 2
-
-    onLoad?.()
-
-    this.loadingMediaLayers--
-
-    this.checkFinish()
+        src,
+        error,
+      })
+      this.sharedLoadedMediaVersionLayersData[versionIndex].data[layerIndex] = 0
+      onLoad?.()
+    } finally {
+      this.loadingMediaLayers--
+      this.checkFinish()
+    }
   }
 
   checkFinish() {

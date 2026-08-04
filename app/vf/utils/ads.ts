@@ -48,6 +48,32 @@ export class Ad {
   }
 }
 
+const SUBGRID_SIZE = 18 * 12
+
+const createDummyAdData = (batchIndex = 0, batchItemIndex = 0) => {
+  const id = batchIndex * SUBGRID_SIZE + batchItemIndex
+  const poster = AD_DUMMY_POSTERS[id % AD_DUMMY_POSTERS.length]
+
+  return {
+    id,
+    imdb_id: `tt${String(id).padStart(7, '0')}`,
+    title: `Ad #${id + 1}`,
+    tagline: 'Sponsored content',
+    overview: 'A placeholder advertisement for testing dummy assets.',
+    genres: 'Drama, Fantasy',
+    release_year: 2024,
+    vote_average: 7.5,
+    popularity: 100 + batchIndex,
+    backdrop_path: '/dummy-ads/ad_dummy_01.jpg',
+    poster,
+  }
+}
+
+const createDummyAdBatch = (batchIndex = 0) =>
+  Array.from({ length: SUBGRID_SIZE }, (_, index) =>
+    createDummyAdData(batchIndex, index),
+  )
+
 const loadCellAdBatch = async (batchIndex: number) => {
   const url = `${AD_INFO_BASE_URL}/${batchIndex}.json`
   try {
@@ -55,10 +81,15 @@ const loadCellAdBatch = async (batchIndex: number) => {
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`)
     }
-    return await response.json()
+
+    const data = await response.json()
+    if (!Array.isArray(data)) {
+      throw new Error('Invalid ad batch response format')
+    }
+    return data
   } catch (error) {
-    console.log('batchIndex', batchIndex)
-    console.error('Error loading JSON:', error)
+    console.warn('Failed to load ad batch:', { batchIndex, url, error })
+    return createDummyAdBatch(batchIndex)
   }
 }
 
@@ -67,13 +98,18 @@ export const getCellAd = async (
   adBatches: AdBatches,
 ) => {
   if (!cell) return
-  let adBatch = adBatches.get(cell.subgrid)
+  const batchIndex = Number.isFinite(cell.subgrid) ? cell.subgrid : 0
+  const cellIndex = Number.isFinite(cell.subgridIndex)
+    ? cell.subgridIndex
+    : 0
+
+  let adBatch = adBatches.get(batchIndex)
   if (!adBatch) {
-    adBatch = await loadCellAdBatch(cell.subgrid)
-    adBatches.set(cell.subgrid, adBatch ?? [])
+    adBatch = await loadCellAdBatch(batchIndex)
+    adBatches.set(batchIndex, adBatch ?? createDummyAdBatch(batchIndex))
   }
 
-  return adBatch?.[cell.subgridIndex]
-    ? new Ad(adBatch[cell.subgridIndex])
-    : undefined
+  return adBatch?.[cellIndex]
+    ? new Ad(adBatch[cellIndex])
+    : new Ad(createDummyAdData(batchIndex, cellIndex))
 }
